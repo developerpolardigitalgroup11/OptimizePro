@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <div class="actions">
+        <a href="{{ url_for('sales.record') }}" class="btn btn-primary">Record Sale</a>
+        <a href="{{ url_for('allocation.planner') }}" class="btn btn-secondary">Allocate Stock</a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--products">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+            </svg>
+        </div>
+        <div class="kpi-value">{{ total_products }}</div>
+        <div class="kpi-label">Total Products</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--warehouse">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6.75h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+            </svg>
+        </div>
+        <div class="kpi-value">{{ "{:,}".format(total_warehouse_stock) }}</div>
+        <div class="kpi-label">Warehouse Stock</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--sales">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+        </div>
+        <div class="kpi-value">{{ sales_today_count }}</div>
+        <div class="kpi-label">Units Sold Today (₹{{ "{:,.0f}".format(sales_today_revenue) }})</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--alerts">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
+            </svg>
+        </div>
+        <div class="kpi-value">{{ alert_count }}</div>
+        <div class="kpi-label">Active Alerts</div>
+    </div>
+</div>
+
+<!-- Marketplace Overview -->
+{% if mp_overview %}
+<h2 style="font-size: 1.1rem; margin-bottom: 1rem;">Marketplace Overview</h2>
+<div class="mp-overview-grid">
+    {% for mp_data in mp_overview %}
+    <div class="mp-overview-card">
+        <div class="mp-header">
+            <div class="mp-icon" style="background: {{ mp_data.marketplace.color }}20;">
+                <span class="mp-icon-dot" style="background: {{ mp_data.marketplace.color }};"></span>
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-white);">{{ mp_data.marketplace.name }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted);">{{ mp_data.products_listed }} products listed</div>
+            </div>
+        </div>
+        <div class="mp-stats">
+            <div class="mp-stat-item">
+                <div class="mp-stat-value">{{ "{:,}".format(mp_data.allocated) }}</div>
+                <div class="mp-stat-label">Allocated Units</div>
+            </div>
+            <div class="mp-stat-item">
+                <div class="mp-stat-value">{{ mp_data.today_units }}</div>
+                <div class="mp-stat-label">Sold Today</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="grid-2">
+    <!-- Recent Sales -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Recent Sales</h3>
+            <a href="{{ url_for('sales.history') }}" class="btn btn-sm btn-secondary">View All</a>
+        </div>
+        {% if recent_sales %}
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Product</th><th>Marketplace</th><th>Qty</th><th>Time</th></tr></thead>
+                <tbody>
+                {% for sale in recent_sales %}
+                <tr>
+                    <td>{{ sale.product.name }}</td>
+                    <td><span class="mp-badge"><span class="mp-dot" style="background: {{ sale.marketplace.color }};"></span>{{ sale.marketplace.name }}</span></td>
+                    <td>{{ sale.quantity_sold }}</td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">{{ sale.sale_date.strftime('%b %d, %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"></div>
+            <h3>No sales yet</h3>
+            <p>Record your first sale to get started</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Top Alerts -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Active Alerts</h3>
+            <a href="{{ url_for('alerts.list_alerts') }}" class="btn btn-sm btn-secondary">View All</a>
+        </div>
+        {% if alerts %}
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for alert in alerts %}
+            <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); border-left: 3px solid {% if alert.priority == 'HIGH' %}var(--priority-high){% elif alert.priority == 'MEDIUM' %}var(--priority-medium){% else %}var(--priority-low){% endif %};">
+                <div style="font-size: 0.85rem;">{{ alert.message }}</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    {{ alert.product.name }} · {{ alert.created_at.strftime('%b %d, %H:%M') }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon"></div>
+            <h3>All clear!</h3>
+            <p>No active alerts</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

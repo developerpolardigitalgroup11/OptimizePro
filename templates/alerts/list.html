@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Alerts — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Stock Alerts</h1>
+    <div class="actions">
+        <a href="{{ url_for('export.alerts') }}" class="btn btn-secondary">Export</a>
+        <form method="POST" action="{{ url_for('alerts.refresh') }}" style="display: inline;">
+            <button type="submit" class="btn btn-primary">Refresh Alerts</button>
+        </form>
+    </div>
+</div>
+
+<div class="filter-bar">
+    <div class="filter-group">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Marketplace:</label>
+        <select onchange="window.location.href='?marketplace_id='+this.value" class="form-control" style="width: 160px; padding: 0.4rem 0.75rem;">
+            <option value="">All Marketplaces</option>
+            {% for mp in marketplaces %}
+            <option value="{{ mp.id }}" {% if selected_mp == mp.id %}selected{% endif %}>{{ mp.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+{% if alerts %}
+<div style="display: flex; flex-direction: column; gap: 0.75rem;">
+    {% for alert in alerts %}
+    <div class="card" style="display: flex; align-items: flex-start; justify-content: space-between; padding: 1rem 1.25rem;">
+        <div style="display: flex; gap: 1rem; flex: 1;">
+            <div>
+                <span class="priority-badge {{ alert.priority|lower }}">{{ alert.priority }}</span>
+                {% if alert.alert_type == 'REBALANCE' %}<span class="priority-badge rebalance">REBALANCE</span>{% endif %}
+            </div>
+            <div>
+                <div style="font-size: 0.9rem; margin-bottom: 0.25rem;">{{ alert.message }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">
+                    {{ alert.product.name }}
+                    {% if alert.marketplace %} · <span class="mp-badge"><span class="mp-dot" style="background: {{ alert.marketplace.color }};"></span>{{ alert.marketplace.name }}</span>{% endif %}
+                    · {{ alert.created_at.strftime('%b %d, %H:%M') }}
+                </div>
+            </div>
+        </div>
+        <form method="POST" action="{{ url_for('alerts.dismiss', alert_id=alert.id) }}">
+            <button type="submit" class="btn btn-sm btn-secondary" title="Dismiss">✕</button>
+        </form>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon"></div><h3>All clear!</h3><p>No active alerts. Stock levels are healthy.</p></div>
+{% endif %}
+{% endblock %}

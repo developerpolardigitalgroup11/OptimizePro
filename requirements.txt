@@ -1,0 +1,12 @@
+Flask
+Flask-Login
+Flask-SQLAlchemy
+Flask-WTF
+bcrypt
+pandas
+numpy
+statsmodels
+scikit-learn
+itsdangerous
+psycopg2-binary
+gunicorn; sys_platform != 'win32'

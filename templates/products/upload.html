@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Upload CSV — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Upload Products via CSV</h1>
+    <a href="{{ url_for('products.list_products') }}" class="btn btn-secondary">← Back</a>
+</div>
+<div class="card">
+    <form method="POST" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="csv_file">Select CSV File</label>
+            <input type="file" id="csv_file" name="csv_file" class="form-control" accept=".csv" required>
+        </div>
+        <button type="submit" class="btn btn-primary">📤 Upload & Import</button>
+    </form>
+    <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-secondary); border-radius: var(--radius); border: 1px solid var(--border);">
+        <h3 style="font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; color: var(--text-white);">CSV Upload Guidelines & Documentation</h3>
+        
+        <h4 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent-primary);">Format Overview</h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Your CSV file must include a header row with specific column names. The system uses these headers to map your data correctly.
+        </p>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Required Columns</h4>
+        <ul style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; padding-left: 1.5rem;">
+            <li><code>sku</code>: A unique identifier for the product (e.g., WH-1000).</li>
+            <li><code>name</code>: The full name of the product.</li>
+            <li><code>cost_price</code>: Your base cost to acquire or manufacture the unit. Must be a positive number.</li>
+            <li><code>quantity</code>: The total starting stock value available in your warehouse.</li>
+        </ul>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Optional Columns</h4>
+        <ul style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; padding-left: 1.5rem;">
+            <li><code>category</code>: A generic categorization tag (e.g., Electronics, Apparel).</li>
+            <li><code>[marketplace_code]_price</code>: To automatically set initial pricing on your marketplaces, you can append `_price` to the marketplace code you've set up. E.g., if you have an `amazon` code, using `amazon_price` will set the listing price for that marketplace during upload.</li>
+        </ul>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--color-warning);">Do's and Don'ts</h4>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div style="background: rgba(34, 197, 94, 0.1); border-left: 3px solid var(--color-success); padding: 0.75rem; border-radius: 4px;">
+                <h5 style="color: var(--color-success); margin-bottom: 0.5rem; font-size: 0.85rem;">Do's ✅</h5>
+                <ul style="font-size: 0.75rem; color: var(--text-secondary); padding-left: 1rem; margin: 0;">
+                    <li style="margin-bottom: 0.25rem;">Always verify your CSV headers exactly match the required/optional names (case-sensitive, lowercase).</li>
+                    <li style="margin-bottom: 0.25rem;">Ensure numeric columns (cost_price, quantity) contain only valid numbers, decimals are allowed for price.</li>
+                    <li>Save your file explicitly as `.csv` format encoded in UTF-8.</li>
+                </ul>
+            </div>
+            <div style="background: rgba(239, 68, 68, 0.1); border-left: 3px solid var(--color-danger); padding: 0.75rem; border-radius: 4px;">
+                <h5 style="color: var(--color-danger); margin-bottom: 0.5rem; font-size: 0.85rem;">Don'ts ❌</h5>
+                <ul style="font-size: 0.75rem; color: var(--text-secondary); padding-left: 1rem; margin: 0;">
+                    <li style="margin-bottom: 0.25rem;">Don't include currency symbols like ₹, $, or commas in your numerical data columns.</li>
+                    <li style="margin-bottom: 0.25rem;">Don't leave required fields blank—the entire row will fail to import if SKU, Name, Cost Price, or Quantity are missing.</li>
+                    <li>Don't include duplicate SKUs within the same CSV file to avoid conflicts.</li>
+                </ul>
+            </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem;">Sample Data Format</h4>
+        <pre style="font-size: 0.8rem; color: var(--text-primary); background: var(--bg-input); padding: 1rem; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow-x: auto;">sku,name,category,cost_price,quantity,amazon_price,flipkart_price
+WH-1000,Sony Headphones,Electronics,15000,100,24990,23999
+IP-15,iPhone 15 Case,Accessories,200,500,599,549</pre>
+    </div>
+</div>
+{% endblock %}

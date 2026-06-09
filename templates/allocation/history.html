@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Allocation History — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Allocation History</h1>
+    <a href="{{ url_for('allocation.planner') }}" class="btn btn-primary">New Allocation</a>
+</div>
+
+{% if plans %}
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for plan in plans %}
+    <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <div>
+                <span style="font-weight: 600;">{{ plan.product.name }}</span>
+                <span style="color: var(--text-muted); font-size: 0.85rem;"> · {{ plan.total_units_to_allocate }} units</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span class="status-badge {{ plan.status }}">{{ plan.status }}</span>
+                <span style="color: var(--text-muted); font-size: 0.75rem;">{{ plan.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                <a href="{{ url_for('export.allocation', plan_id=plan.id) }}" class="btn btn-sm btn-secondary">Export</a>
+            </div>
+        </div>
+        <div class="allocation-bar">
+            {% for line in plan.lines %}
+            <div class="bar-segment" style="width: {{ line.marketplace_share_pct }}%; background: {{ line.marketplace.color }};">
+                {{ line.recommended_qty }}
+            </div>
+            {% endfor %}
+        </div>
+        <div style="display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
+            {% for line in plan.lines %}
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+                <span class="mp-badge"><span class="mp-dot" style="background: {{ line.marketplace.color }};"></span>{{ line.marketplace.name }}</span>
+                {{ line.recommended_qty }} units ({{ "%.1f"|format(line.marketplace_share_pct) }}%)
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon"></div><h3>No allocation plans yet</h3><p>Generate your first allocation plan</p></div>
+{% endif %}
+{% endblock %}

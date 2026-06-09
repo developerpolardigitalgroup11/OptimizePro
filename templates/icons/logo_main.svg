@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="40" height="40" fill="none">
+    <defs>
+        <linearGradient id="brandGradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#6366f1"/>
+            <stop offset="1" stop-color="#a855f7"/>
+        </linearGradient>
+        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+    </defs>
+    
+    <!-- Outer Hexagon -->
+    <path d="M24 4L42 14.392V33.608L24 44L6 33.608V14.392L24 4Z" fill="url(#brandGradient)" fill-opacity="0.1" stroke="url(#brandGradient)" stroke-width="2" stroke-linejoin="round" filter="url(#glow)"/>
+    
+    <!-- Inner Ascending Trend -->
+    <path d="M14 30 L22 22 L28 26 L36 14" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+    
+    <!-- Arrow Head on the Trend -->
+    <path d="M30 14 L36 14 L36 20" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+    
+    <!-- Pulse Dots -->
+    <circle cx="14" cy="30" r="2.5" fill="#ffffff" />
+    <circle cx="22" cy="22" r="2.5" fill="#ffffff" />
+    <circle cx="28" cy="26" r="2.5" fill="#ffffff" />
+</svg>

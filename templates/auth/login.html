@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Login — OptimizePro{% endblock %}
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1>OptimizePro</h1>
+        <p class="subtitle">Sign in to your inventory dashboard</p>
+        <form method="POST">
+            <div class="form-group">
+                <label for="login_id">Username or Email</label>
+                <input type="text" id="login_id" name="login_id" class="form-control"
+                       value="{{ login_id|default('') }}" placeholder="Enter username or email" required autofocus>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control"
+                       placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Sign In</button>
+        </form>
+        <div class="auth-links">
+            <a href="{{ url_for('auth.forgot_password') }}" class="forgot-link">Forgot password?</a>
+        </div>
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('auth.register') }}">Create one</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

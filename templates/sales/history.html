@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Sales History — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Sales <span class="gradient-accent">History</span></h1>
+        <div class="page-subtitle">Track every transaction across all your marketplaces</div>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('export.sales', days=days) }}" class="btn btn-secondary">Export CSV</a>
+        <a href="{{ url_for('sales.upload') }}" class="btn btn-secondary">Upload CSV</a>
+        <a href="{{ url_for('sales.record') }}" class="btn btn-primary">+ Record Sale</a>
+    </div>
+</div>
+
+<!-- Sub-navigation Pills -->
+<div class="sales-subnav">
+    <a href="{{ url_for('sales.record') }}">Record</a>
+    <a href="{{ url_for('sales.history') }}" class="active">History</a>
+    <a href="{{ url_for('sales.upload') }}">Upload</a>
+</div>
+
+<!-- KPI Summary Ribbon -->
+<div class="sales-kpi-ribbon">
+    <div class="sales-kpi-card">
+        <div class="kpi-top">
+            <span class="kpi-indicator kpi-indicator--revenue"></span>
+        </div>
+        <div class="kpi-value">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+        <div class="kpi-label">Total Revenue</div>
+    </div>
+    <div class="sales-kpi-card">
+        <div class="kpi-top">
+            <span class="kpi-indicator kpi-indicator--units"></span>
+        </div>
+        <div class="kpi-value">{{ "{:,}".format(total_units) }}</div>
+        <div class="kpi-label">Units Sold</div>
+    </div>
+    <div class="sales-kpi-card">
+        <div class="kpi-top">
+            <span class="kpi-indicator kpi-indicator--avg"></span>
+        </div>
+        <div class="kpi-value">₹{{ "{:,.0f}".format(avg_price) }}</div>
+        <div class="kpi-label">Avg Sale Price</div>
+    </div>
+    <div class="sales-kpi-card">
+        <div class="kpi-top">
+            <span class="kpi-indicator kpi-indicator--count"></span>
+        </div>
+        <div class="kpi-value">{{ "{:,}".format(transaction_count) }}</div>
+        <div class="kpi-label">Transactions</div>
+    </div>
+</div>
+
+<!-- Enhanced Filter Bar -->
+<div class="filter-bar-enhanced">
+    <span class="filter-icon-indicator"></span>
+    <div class="filter-group">
+        <label style="font-size: 0.8rem; color: var(--text-muted);">Marketplace:</label>
+        <select onchange="window.location.href='?marketplace_id='+this.value+'&days={{ days }}'" class="form-control" style="width: 160px; padding: 0.4rem 0.75rem;">
+            <option value="">All</option>
+            {% for mp in marketplaces %}
+            <option value="{{ mp.id }}" {% if selected_mp == mp.id %}selected{% endif %}>{{ mp.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="filter-separator"></div>
+    <div class="filter-group">
+        <div class="date-pills">
+            {% for d in [7, 14, 30, 90] %}
+            <a href="?days={{ d }}{% if selected_mp %}&marketplace_id={{ selected_mp }}{% endif %}" class="date-pill {% if days == d %}active{% endif %}">{{ d }}d</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Sales Table -->
+{% if sales %}
+<div class="table-enhanced">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Product</th>
+                    <th>Marketplace</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                    <th>Revenue</th>
+                    <th>Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td class="col-date">{{ sale.sale_date.strftime('%b %d, %H:%M') }}</td>
+                <td>{{ sale.product.name }}</td>
+                <td><span class="mp-badge"><span class="mp-dot" style="background: {{ sale.marketplace.color }};"></span>{{ sale.marketplace.name }}</span></td>
+                <td>{{ sale.quantity_sold }}</td>
+                <td>₹{{ "%.0f"|format(sale.sale_price) }}</td>
+                <td class="col-revenue">₹{{ "%.0f"|format(sale.revenue) }}</td>
+                <td class="col-profit {% if sale.profit >= 0 %}positive{% else %}negative{% endif %}">₹{{ "%.0f"|format(sale.profit) }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="table-footer">
+        <span>Showing {{ sales|length }} transaction{{ 's' if sales|length != 1 }} from last {{ days }} days</span>
+        <span>₹{{ "{:,.0f}".format(total_profit) }} total profit</span>
+    </div>
+</div>
+{% else %}
+<div class="table-enhanced">
+    <div class="empty-state-enhanced">
+        <span class="empty-icon-indicator"></span>
+        <h3>No sales in this period</h3>
+        <p>Try adjusting your date range or marketplace filter, or record a new sale</p>
+        <a href="{{ url_for('sales.record') }}" class="btn btn-primary">Record a Sale</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

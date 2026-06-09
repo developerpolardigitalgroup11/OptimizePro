@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Marketplaces — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Marketplaces</h1>
+    <a href="{{ url_for('marketplaces.add_marketplace') }}" class="btn btn-primary">+ Add Marketplace</a>
+</div>
+
+{% if marketplaces %}
+<div style="display: grid; gap: 1rem;">
+    {% for mp in marketplaces %}
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 40px; height: 40px; border-radius: var(--radius); background: {{ mp.color }}20; display: flex; align-items: center; justify-content: center;">
+                {% if mp.logo_path %}
+                    {% include [mp.logo_path, 'icons/fallback_dot.html'] %}
+                {% else %}
+                    {% set logo_path = 'icons/logo_' ~ mp.code.lower() ~ '.svg' %}
+                    {% include [logo_path, 'icons/fallback_dot.html'] %}
+                {% endif %}
+            </div>
+            <div>
+                <div style="font-weight: 600; color: var(--text-white); display: flex; align-items: center; gap: 0.5rem;">
+                    {{ mp.name }}
+                    <span class="mp-badge"><span class="mp-dot" style="background: {{ mp.color }};"></span>{{ mp.code }}</span>
+                    {% if not mp.is_active %}<span class="priority-badge low">Inactive</span>{% endif %}
+                </div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">Priority: {{ mp.priority }} · Created: {{ mp.created_at.strftime('%b %d, %Y') }}</div>
+            </div>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <form method="POST" action="{{ url_for('marketplaces.toggle_marketplace', mp_id=mp.id) }}" style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-secondary">
+                    {{ 'Deactivate' if mp.is_active else 'Activate' }}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon"></div><h3>No marketplaces</h3><p>Add your first marketplace to get started</p></div>
+{% endif %}
+{% endblock %}

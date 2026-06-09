@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Import Sales CSV — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Import <span class="gradient-accent">Sales</span> via CSV</h1>
+        <div class="page-subtitle">Bulk-import your sales history from any marketplace</div>
+    </div>
+    <a href="{{ url_for('sales.history') }}" class="btn btn-secondary">← Back to History</a>
+</div>
+
+<!-- Sub-navigation Pills -->
+<div class="sales-subnav">
+    <a href="{{ url_for('sales.record') }}">Record</a>
+    <a href="{{ url_for('sales.history') }}">History</a>
+    <a href="{{ url_for('sales.upload') }}" class="active">Upload</a>
+</div>
+
+<div class="upload-card">
+    <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <!-- Drag-and-Drop Upload Zone -->
+        <div class="upload-dropzone" id="dropzone">
+            <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+            <span class="dropzone-icon-indicator"></span>
+            <div class="dropzone-title">Drag & drop your CSV file here</div>
+            <div class="dropzone-subtitle">or <span>click to browse</span> your files</div>
+            <div class="file-preview" id="filePreview">
+                <span class="file-icon-indicator"></span>
+                <span class="file-name" id="fileName"></span>
+                <span class="file-size" id="fileSize"></span>
+            </div>
+        </div>
+
+        <!-- Toggle Switch for Inventory Deduction -->
+        <label class="toggle-container" for="deduct_inventory">
+            <div class="toggle-switch">
+                <input type="checkbox" name="deduct_inventory" id="deduct_inventory">
+                <span class="toggle-slider"></span>
+            </div>
+            <div>
+                <div class="toggle-label-title">Deduct from current inventory</div>
+                <div class="toggle-label-desc">
+                    If enabled, importing will <strong>reduce</strong> your allocated stock for every sale (like a bulk order sync). 
+                    Leave off if importing historical data and your current stock is already accurate.
+                </div>
+            </div>
+        </label>
+
+        <button type="submit" class="btn-submit-sale">Upload & Import Sales</button>
+    </form>
+
+    <!-- Collapsible Documentation Accordion -->
+    <div class="docs-accordion" id="docsAccordion">
+        <div class="docs-accordion-header" onclick="toggleAccordion()">
+            <h3>CSV Format Guide</h3>
+            <span class="docs-accordion-chevron">▼</span>
+        </div>
+        <div class="docs-accordion-body">
+            <div class="docs-accordion-content">
+                <h4 class="docs-section-title">Format Overview</h4>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Your CSV file must include a header row with specific column names to seamlessly map your sales history.
+                </p>
+
+                <h4 class="docs-section-title">Required Columns</h4>
+                <ul class="docs-list">
+                    <li><code>sku</code> — The exact product SKU matching your catalog (e.g., WH-1000)</li>
+                    <li><code>marketplace</code> — The marketplace exact code (e.g., amazon, flipkart, meesho)</li>
+                    <li><code>quantity</code> — The number of units sold. Must be a positive integer</li>
+                    <li><code>sale_price</code> — The final selling price per unit. Must be numeric</li>
+                </ul>
+
+                <h4 class="docs-section-title">Optional Columns</h4>
+                <ul class="docs-list">
+                    <li><code>date</code> — Sale date in YYYY-MM-DD format. Defaults to today if omitted</li>
+                </ul>
+
+                <h4 class="docs-section-title" style="color: var(--color-warning);">Do's and Don'ts</h4>
+                <div class="dos-donts-grid">
+                    <div class="dos-card">
+                        <h5>Do's</h5>
+                        <ul>
+                            <li>Ensure SKUs precisely match your catalog capitalization</li>
+                            <li>Format dates as standard YYYY-MM-DD</li>
+                            <li>Verify marketplace codes are active in your settings</li>
+                        </ul>
+                    </div>
+                    <div class="donts-card">
+                        <h5>Don'ts</h5>
+                        <ul>
+                            <li>Don't include currency symbols in <code>sale_price</code></li>
+                            <li>Don't leave the marketplace column blank</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4 class="docs-section-title">Sample Data</h4>
+                <div class="sample-code-block">
+                    <button type="button" class="btn-copy" id="btnCopy" onclick="copySample()">Copy</button>
+                    <pre id="sampleData">sku,marketplace,quantity,sale_price,date
+WH-1000,amazon,3,24990,2023-10-14
+IP-15,flipkart,1,549,2023-10-15
+WH-1000,meesho,10,23000,</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Drag-and-drop functionality
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('csv_file');
+const filePreview = document.getElementById('filePreview');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+
+['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+    });
+});
+
+['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+    });
+});
+
+dropzone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        showFilePreview(files[0]);
+    }
+});
+
+fileInput.addEventListener('change', function() {
+    if (this.files.length > 0) {
+        showFilePreview(this.files[0]);
+    }
+});
+
+function showFilePreview(file) {
+    fileName.textContent = file.name;
+    const sizeKB = (file.size / 1024).toFixed(1);
+    fileSize.textContent = sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + ' MB' : sizeKB + ' KB';
+    filePreview.style.display = 'flex';
+}
+
+// Accordion toggle
+function toggleAccordion() {
+    document.getElementById('docsAccordion').classList.toggle('open');
+}
+
+// Copy sample data
+function copySample() {
+    const text = document.getElementById('sampleData').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btnCopy');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
+{% endblock %}

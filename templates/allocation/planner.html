@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Stock Allocation — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Smart Stock Allocation</h1>
+    <a href="{{ url_for('allocation.history') }}" class="btn btn-secondary">History</a>
+</div>
+
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem;">Generate Allocation Plan</h3>
+    <form id="allocForm">
+        <div class="grid-2">
+            <div class="form-group">
+                <label for="alloc_product">Product</label>
+                <select id="alloc_product" name="product_id" class="form-control" required>
+                    <option value="">Select product...</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}">{{ product.sku }} — {{ product.name }} ({{ product.total_warehouse_qty }} in warehouse)</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="alloc_units">Units to Allocate</label>
+                <input type="number" id="alloc_units" name="total_units" class="form-control" min="1" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="generateBtn">Generate Plan</button>
+    </form>
+</div>
+
+<!-- Allocation Preview (appears after generation) -->
+<div id="allocPreview" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h3>Allocation Recommendation</h3>
+            <span id="planProduct" style="color: var(--text-secondary); font-size: 0.85rem;"></span>
+        </div>
+
+        <!-- Stacked Bar -->
+        <div class="allocation-bar" id="allocBar"></div>
+
+        <!-- Table -->
+        <div class="table-container" style="margin-top: 1rem;">
+            <table>
+                <thead><tr><th>Marketplace</th><th>Recommended Qty</th><th>Predicted Demand (14d)</th><th>Share</th><th>Reasoning</th></tr></thead>
+                <tbody id="allocTableBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <form method="POST" id="applyForm">
+                <button type="submit" class="btn btn-success">Apply Allocation</button>
+            </form>
+            <a id="exportPlanBtn" href="#" class="btn btn-secondary">Export CSV</a>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+document.getElementById('allocForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Generating...';
+
+    const formData = new FormData(this);
+    fetch('/allocation/generate', { method: 'POST', body: formData })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = 'Generate Plan';
+
+            if (!data.success) {
+                alert(data.error || 'Failed to generate plan');
+                return;
+            }
+
+            const plan = data.plan;
+            document.getElementById('planProduct').textContent = plan.product + ' — ' + plan.total_units + ' units';
+
+            // Build stacked bar
+            const bar = document.getElementById('allocBar');
+            bar.innerHTML = '';
+            plan.lines.forEach(line => {
+                const seg = document.createElement('div');
+                seg.className = 'bar-segment';
+                seg.style.width = line.share + '%';
+                seg.style.background = line.color;
+                seg.textContent = line.qty;
+                bar.appendChild(seg);
+            });
+
+            // Build table
+            const tbody = document.getElementById('allocTableBody');
+            tbody.innerHTML = '';
+            plan.lines.forEach(line => {
+                tbody.innerHTML += `<tr>
+                    <td><span class="mp-badge"><span class="mp-dot" style="background: ${line.color};"></span>${line.marketplace}</span></td>
+                    <td style="font-weight: 700; font-size: 1.1rem;">${line.qty}</td>
+                    <td>${line.demand}</td>
+                    <td>${line.share}%</td>
+                    <td style="font-size: 0.8rem; color: var(--text-muted);">${line.reasoning}</td>
+                </tr>`;
+            });
+
+            // Set apply form action
+            document.getElementById('applyForm').action = `/allocation/${plan.plan_id}/apply`;
+            document.getElementById('exportPlanBtn').href = `/export/allocation/${plan.plan_id}`;
+            document.getElementById('allocPreview').style.display = 'block';
+        });
+});
+</script>
+{% endblock %}
+{% endblock %}

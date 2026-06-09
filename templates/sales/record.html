@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block title %}Record Sale — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Record a <span class="gradient-accent">Sale</span></h1>
+        <div class="page-subtitle">Log individual transactions across your marketplaces</div>
+    </div>
+    <div class="actions">
+        <a href="{{ url_for('sales.upload') }}" class="btn btn-secondary">Upload CSV</a>
+        <a href="{{ url_for('sales.history') }}" class="btn btn-secondary">Sales History</a>
+    </div>
+</div>
+
+<!-- Sub-navigation Pills -->
+<div class="sales-subnav">
+    <a href="{{ url_for('sales.record') }}" class="active">Record</a>
+    <a href="{{ url_for('sales.history') }}">History</a>
+    <a href="{{ url_for('sales.upload') }}">Upload</a>
+</div>
+
+<div class="record-page-layout">
+    <!-- Left: Sale Form -->
+    <div class="sale-form-card">
+        <form method="POST" id="saleForm">
+            <div class="form-group">
+                <label for="marketplace_id">Marketplace</label>
+                <select id="marketplace_id" name="marketplace_id" class="form-control" required>
+                    <option value="">Select marketplace...</option>
+                    {% for mp in marketplaces %}
+                    <option value="{{ mp.id }}" data-color="{{ mp.color }}">{{ mp.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="product_id">Product</label>
+                <select id="product_id" name="product_id" class="form-control" required>
+                    <option value="">Select product...</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-cost="{{ product.cost_price }}">{{ product.sku }} — {{ product.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Enhanced Stock Info Panel -->
+            <div id="stockInfo" class="stock-panel" style="display: none;">
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" class="form-control" min="1" value="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="sale_price">Sale Price (₹ per unit)</label>
+                    <input type="number" id="sale_price" name="sale_price" class="form-control" step="0.01" min="0" required>
+                </div>
+            </div>
+
+            <!-- Sale Date Field -->
+            <div class="form-group">
+                <label for="sale_date">Sale Date</label>
+                <input type="date" id="sale_date" name="sale_date" class="form-control" max="" value="">
+            </div>
+
+            <!-- Revenue Preview -->
+            <div class="revenue-preview" id="revenuePreview">
+                <div>
+                    <div class="revenue-label">Estimated Revenue</div>
+                    <div class="revenue-breakdown" id="revenueBreakdown">Enter quantity & price to see preview</div>
+                </div>
+                <div class="revenue-value" id="revenueValue">—</div>
+            </div>
+
+            <!-- Profit Estimator -->
+            <div class="profit-estimator" id="profitEstimator" style="display: none;">
+                <span class="profit-indicator"></span>
+                <span class="profit-label">Est. Profit</span>
+                <span class="profit-margin" id="profitMargin"></span>
+                <span class="profit-value" id="profitValue">—</span>
+            </div>
+
+            <button type="submit" class="btn-submit-sale" style="margin-top: 1.25rem;">Record Sale</button>
+        </form>
+    </div>
+
+    <!-- Right: Product Info Sidebar -->
+    <div class="record-sidebar" id="recordSidebar" style="display: none;">
+        <!-- Product Info Card -->
+        <div class="product-info-card" id="productInfoCard">
+            <div class="product-info-header">
+                <div>
+                    <div class="product-name" id="piName"></div>
+                    <div class="product-sku" id="piSku"></div>
+                </div>
+                <span class="product-category" id="piCategory"></span>
+            </div>
+
+            <!-- Mini Stats Grid -->
+            <div class="product-mini-stats">
+                <div class="mini-stat">
+                    <div class="mini-stat-value" id="piCost">—</div>
+                    <div class="mini-stat-label">Cost Price</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-stat-value" id="piWarehouse">—</div>
+                    <div class="mini-stat-label">Warehouse</div>
+                </div>
+                <div class="mini-stat highlight-blue">
+                    <div class="mini-stat-value" id="piAllocated">—</div>
+                    <div class="mini-stat-label">Allocated</div>
+                </div>
+                <div class="mini-stat highlight-green">
+                    <div class="mini-stat-value" id="piUnallocated">—</div>
+                    <div class="mini-stat-label">Unallocated</div>
+                </div>
+            </div>
+
+            <!-- Sales Velocity -->
+            <div class="velocity-badges">
+                <div class="velocity-badge">
+                    <span class="velocity-indicator"></span>
+                    <div>
+                        <div><span class="velocity-value" id="vel7dUnits">0</span> units</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Last 7 days</div>
+                    </div>
+                </div>
+                <div class="velocity-badge">
+                    <span class="velocity-indicator"></span>
+                    <div>
+                        <div><span class="velocity-value" id="vel30dUnits">0</span> units</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">Last 30 days</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sales -->
+        <div class="recent-sales-panel" id="recentSalesPanel" style="display: none;">
+            <div class="recent-sales-header">
+                <h4>Recent Sales</h4>
+                <a href="{{ url_for('sales.history') }}">View all →</a>
+            </div>
+            <table class="recent-sales-table">
+                <thead>
+                    <tr><th>Date</th><th>Marketplace</th><th>Qty</th><th>Profit</th></tr>
+                </thead>
+                <tbody id="recentSalesBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+const productSelect = document.getElementById('product_id');
+const marketplaceSelect = document.getElementById('marketplace_id');
+const stockInfo = document.getElementById('stockInfo');
+const priceInput = document.getElementById('sale_price');
+const qtyInput = document.getElementById('quantity');
+const revenueValue = document.getElementById('revenueValue');
+const revenueBreakdown = document.getElementById('revenueBreakdown');
+const profitEstimator = document.getElementById('profitEstimator');
+const profitValue = document.getElementById('profitValue');
+const profitMargin = document.getElementById('profitMargin');
+const sidebar = document.getElementById('recordSidebar');
+const saleDateInput = document.getElementById('sale_date');
+
+// Set date input default and max to today
+const today = new Date().toISOString().split('T')[0];
+saleDateInput.value = today;
+saleDateInput.max = today;
+
+let currentCostPrice = 0;
+
+function updateStockInfo() {
+    const productId = productSelect.value;
+    const marketplaceId = marketplaceSelect.value;
+    if (!productId) { stockInfo.style.display = 'none'; return; }
+
+    fetch(`/sales/api/product-inventory/${productId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data.length === 0) {
+                stockInfo.innerHTML = '<div class="stock-panel-title">Not listed on any marketplace</div>';
+                stockInfo.style.display = 'block';
+                return;
+            }
+            let html = '<div class="stock-panel-title">Stock by Marketplace</div>';
+            data.forEach(mi => {
+                const isSelected = mi.marketplace_id == marketplaceId;
+                html += `<div class="stock-row ${isSelected ? 'highlighted' : ''}">
+                    <div class="mp-info">
+                        <span class="mp-color-dot" style="background: ${mi.color};"></span>
+                        ${mi.marketplace_name}
+                    </div>
+                    <div class="stock-detail"><strong>${mi.allocated_qty}</strong> units · ₹${mi.selling_price.toLocaleString('en-IN')}</div>
+                </div>`;
+                if (isSelected) { priceInput.value = mi.selling_price; updateRevenue(); }
+            });
+            stockInfo.innerHTML = html;
+            stockInfo.style.display = 'block';
+        });
+}
+
+function updateProductDetails() {
+    const productId = productSelect.value;
+    if (!productId) {
+        sidebar.style.display = 'none';
+        return;
+    }
+
+    // Get cost price from selected option
+    const selectedOpt = productSelect.options[productSelect.selectedIndex];
+    currentCostPrice = parseFloat(selectedOpt.dataset.cost) || 0;
+
+    fetch(`/sales/api/product-details/${productId}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.sku) { sidebar.style.display = 'none'; return; }
+
+            // Product info header
+            document.getElementById('piName').textContent = data.name;
+            document.getElementById('piSku').textContent = 'SKU: ' + data.sku;
+            document.getElementById('piCategory').textContent = data.category;
+
+            // Mini stats
+            document.getElementById('piCost').textContent = '₹' + data.cost_price.toLocaleString('en-IN');
+            document.getElementById('piWarehouse').textContent = data.warehouse_qty.toLocaleString();
+            document.getElementById('piAllocated').textContent = data.total_allocated.toLocaleString();
+            document.getElementById('piUnallocated').textContent = data.unallocated_qty.toLocaleString();
+
+            // Velocity badges
+            document.getElementById('vel7dUnits').textContent = data.stats_7d.units.toLocaleString();
+            document.getElementById('vel30dUnits').textContent = data.stats_30d.units.toLocaleString();
+
+            // Recent sales table
+            const recentPanel = document.getElementById('recentSalesPanel');
+            const tbody = document.getElementById('recentSalesBody');
+            if (data.recent_sales.length > 0) {
+                tbody.innerHTML = data.recent_sales.map(s => `
+                    <tr>
+                        <td style="color: var(--text-muted); font-size: 0.75rem;">${s.date}</td>
+                        <td><span class="mp-badge"><span class="mp-dot" style="background: ${s.color};"></span>${s.marketplace}</span></td>
+                        <td>${s.qty}</td>
+                        <td class="profit-cell ${s.profit >= 0 ? 'positive' : 'negative'}">₹${Math.round(s.profit).toLocaleString('en-IN')}</td>
+                    </tr>
+                `).join('');
+                recentPanel.style.display = 'block';
+            } else {
+                recentPanel.style.display = 'none';
+            }
+
+            sidebar.style.display = 'flex';
+            updateRevenue(); // Refresh profit estimate with new cost price
+        })
+        .catch(() => { sidebar.style.display = 'none'; });
+}
+
+function updateRevenue() {
+    const qty = parseFloat(qtyInput.value) || 0;
+    const price = parseFloat(priceInput.value) || 0;
+    const total = qty * price;
+
+    if (qty > 0 && price > 0) {
+        revenueValue.textContent = '₹' + total.toLocaleString('en-IN');
+        revenueBreakdown.textContent = `${qty} × ₹${price.toLocaleString('en-IN')} per unit`;
+
+        // Profit estimate
+        if (currentCostPrice > 0) {
+            const profit = (price - currentCostPrice) * qty;
+            const marginPct = ((price - currentCostPrice) / price * 100).toFixed(1);
+            profitValue.textContent = (profit >= 0 ? '₹' : '-₹') + Math.abs(Math.round(profit)).toLocaleString('en-IN');
+            profitMargin.textContent = marginPct + '% margin';
+            profitEstimator.className = 'profit-estimator' + (profit < 0 ? ' loss' : '');
+            profitEstimator.style.display = 'flex';
+        } else {
+            profitEstimator.style.display = 'none';
+        }
+    } else {
+        revenueValue.textContent = '—';
+        revenueBreakdown.textContent = 'Enter quantity & price to see preview';
+        profitEstimator.style.display = 'none';
+    }
+}
+
+productSelect.addEventListener('change', () => {
+    updateStockInfo();
+    updateProductDetails();
+});
+marketplaceSelect.addEventListener('change', updateStockInfo);
+qtyInput.addEventListener('input', updateRevenue);
+priceInput.addEventListener('input', updateRevenue);
+</script>
+{% endblock %}
+{% endblock %}

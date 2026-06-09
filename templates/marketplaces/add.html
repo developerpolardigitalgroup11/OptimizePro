@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Add Marketplace — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Add Marketplace</h1>
+    <a href="{{ url_for('marketplaces.list_marketplaces') }}" class="btn btn-secondary">← Back</a>
+</div>
+<div class="card">
+    <form method="POST">
+        <div class="form-group">
+            <label for="platform">Platform</label>
+            <select id="platform" name="platform" class="form-control" required>
+                <option value="" disabled selected>Select an e-commerce platform</option>
+                <option value="amazon">Amazon</option>
+                <option value="flipkart">Flipkart</option>
+                <option value="meesho">Meesho</option>
+                <option value="myntra">Myntra</option>
+            </select>
+            <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">Name, color, and logo will be automatically assigned.</small>
+        </div>
+        <div class="form-group">
+            <label for="priority">Priority (higher = more important)</label>
+            <input type="number" id="priority" name="priority" class="form-control" value="1" min="1" max="10">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Marketplace</button>
+    </form>
+</div>
+{% endblock %}

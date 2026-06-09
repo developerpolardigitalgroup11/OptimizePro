@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Products — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Products</h1>
+    <div class="actions">
+        <a href="{{ url_for('products.upload') }}" class="btn btn-secondary">Upload CSV</a>
+        <a href="{{ url_for('products.add_product') }}" class="btn btn-primary">+ Add Product</a>
+    </div>
+</div>
+
+{% if products %}
+<div class="card">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Cost</th>
+                    <th>Warehouse</th>
+                    {% for mp in marketplaces %}
+                    <th><span class="mp-badge"><span class="mp-dot" style="background: {{ mp.color }};"></span>{{ mp.name }}</span></th>
+                    {% endfor %}
+                    <th>Unallocated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr>
+                    <td style="font-weight: 600; font-family: monospace;">{{ product.sku }}</td>
+                    <td>{{ product.name }}</td>
+                    <td><span style="color: var(--text-muted);">{{ product.category }}</span></td>
+                    <td>₹{{ "%.0f"|format(product.cost_price) }}</td>
+                    <td style="font-weight: 600;">{{ product.total_warehouse_qty }}</td>
+                    {% for mp in marketplaces %}
+                    {% set mi = product.marketplace_inventory.filter_by(marketplace_id=mp.id).first() %}
+                    <td>
+                        {% if mi and mi.is_listed %}
+                        <div>{{ mi.allocated_qty }}</div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted);">₹{{ "%.0f"|format(mi.selling_price) }}</div>
+                        {% else %}
+                        <span style="color: var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td style="color: {% if product.unallocated_qty > 0 %}var(--color-warning){% else %}var(--text-muted){% endif %};">
+                        {{ product.unallocated_qty }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="empty-state"><div class="empty-state-icon"></div><h3>No products yet</h3><p>Add products manually or upload a CSV file</p></div>
+{% endif %}
+{% endblock %}

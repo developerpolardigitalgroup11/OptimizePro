@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Analytics — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>Analytics Dashboard</h1>
+    <div class="actions">
+        <a href="{{ url_for('export.analytics', days=days) }}" class="btn btn-secondary">Export CSV</a>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="filter-group">
+        <div class="date-pills">
+            {% for d in [7, 14, 30, 90] %}
+            <a href="?days={{ d }}" class="date-pill {% if days == d %}active{% endif %}">{{ d }}d</a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--analytics">
+            {% include 'icons/analytics.svg' %}
+        </div>
+        <div class="kpi-value">{{ accuracy.accuracy_pct }}%</div>
+        <div class="kpi-label">Forecast Accuracy</div>
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">{{ accuracy.data_points }} data points</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--sales">
+            {% include 'icons/sales.svg' %}
+        </div>
+        <div class="kpi-value">₹{{ "{:,.0f}".format(financial.profits_gained) }}</div>
+        <div class="kpi-label">Profits Gained</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--shield">
+            {% include 'icons/shield.svg' %}
+        </div>
+        <div class="kpi-value">₹{{ "{:,.0f}".format(financial.losses_saved) }}</div>
+        <div class="kpi-label">Losses Saved</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--forecasts">
+            {% include 'icons/forecasts.svg' %}
+        </div>
+        <div class="kpi-value">₹{{ "{:,.0f}".format(financial.net_impact) }}</div>
+        <div class="kpi-label">Net Impact</div>
+    </div>
+    <div class="kpi-card">
+        <div class="kpi-icon-indicator kpi-icon--allocation">
+            {% include 'icons/allocation.svg' %}
+        </div>
+        <div class="kpi-value">{{ financial.follow_rate }}%</div>
+        <div class="kpi-label">Recommendation Follow Rate</div>
+    </div>
+</div>
+
+<!-- Marketplace Performance Comparison -->
+{% if mp_compare %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header">
+        <h3>Marketplace Performance</h3>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead><tr><th>Marketplace</th><th>Revenue</th><th>Units Sold</th><th>Profit</th><th>Avg Daily</th></tr></thead>
+            <tbody>
+            {% for mp in mp_compare %}
+            <tr>
+                <td><span class="mp-badge"><span class="mp-dot" style="background: {{ mp.color }};"></span>{{ mp.name }}</span></td>
+                <td style="font-weight: 600;">₹{{ "{:,.0f}".format(mp.revenue) }}</td>
+                <td>{{ "{:,}".format(mp.units_sold) }}</td>
+                <td style="color: var(--color-success);">₹{{ "{:,.0f}".format(mp.profit) }}</td>
+                <td>{{ mp.avg_daily_units }} units</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="chart-container">
+        <canvas id="mpChart"></canvas>
+    </div>
+</div>
+{% endif %}
+
+<!-- Per-Marketplace Accuracy -->
+{% if accuracy.per_marketplace %}
+<div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card-header"><h3>Forecast Accuracy by Marketplace</h3></div>
+    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+        {% for mp_id, mp_acc in accuracy.per_marketplace.items() %}
+        <div style="flex: 1; min-width: 150px; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <span class="mp-dot" style="background: {{ mp_acc.color }}; width: 10px; height: 10px; border-radius: 50%;"></span>
+                <span style="font-weight: 600;">{{ mp_acc.name }}</span>
+            </div>
+            <div style="font-family: 'Outfit'; font-size: 1.5rem; font-weight: 700;">{{ mp_acc.accuracy_pct }}%</div>
+            <div style="font-size: 0.7rem; color: var(--text-muted);">{{ mp_acc.data_points }} predictions</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Revenue Trend Chart -->
+<div class="card">
+    <div class="card-header"><h3>Revenue Trend by Marketplace</h3></div>
+    <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+// Marketplace comparison bar chart
+{% if mp_compare %}
+const mpCtx = document.getElementById('mpChart').getContext('2d');
+new Chart(mpCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for mp in mp_compare %}'{{ mp.name }}',{% endfor %}],
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: [{% for mp in mp_compare %}{{ mp.revenue }},{% endfor %}],
+            backgroundColor: [{% for mp in mp_compare %}'{{ mp.color }}',{% endfor %}],
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#9ca3b8' } }
+        }
+    }
+});
+{% endif %}
+
+// Revenue trend
+fetch('/analytics/api/revenue-trend?days={{ days }}')
+    .then(r => r.json())
+    .then(data => {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const datasets = Object.values(data.datasets).map(ds => ({
+            label: ds.label,
+            data: ds.data,
+            borderColor: ds.color,
+            backgroundColor: ds.color + '33',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 0,
+        }));
+        new Chart(ctx, {
+            type: 'line',
+            data: { labels: data.dates.map(d => d.slice(5)), datasets: datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#9ca3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } }
+                },
+                plugins: { legend: { labels: { color: '#9ca3b8' } } }
+            }
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
