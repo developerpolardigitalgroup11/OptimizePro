@@ -28,9 +28,8 @@ def migrate():
     postgres_url = os.environ.get('DATABASE_URL')
     
     if not postgres_url:
-        print("Error: DATABASE_URL environment variable is not set.")
-        print("Please set it to your PostgreSQL connection string (e.g., postgresql://user:pass@host:5432/dbname)")
-        return
+        print("DATABASE_URL environment variable is not set. Falling back to default...")
+        postgres_url = "postgresql://postgres:password@localhost:5432/optimize_pro"
         
     if postgres_url.startswith('postgres://'):
         postgres_url = postgres_url.replace('postgres://', 'postgresql://', 1)

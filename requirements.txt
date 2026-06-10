@@ -8,5 +8,7 @@ numpy
 statsmodels
 scikit-learn
 itsdangerous
+
 psycopg2-binary
+
 gunicorn; sys_platform != 'win32'

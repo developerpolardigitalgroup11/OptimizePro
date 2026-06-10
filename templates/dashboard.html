@@ -57,7 +57,12 @@
     <div class="mp-overview-card">
         <div class="mp-header">
             <div class="mp-icon" style="background: {{ mp_data.marketplace.color }}20;">
-                <span class="mp-icon-dot" style="background: {{ mp_data.marketplace.color }};"></span>
+                {% if mp_data.marketplace.logo_path %}
+                    {% include [mp_data.marketplace.logo_path, 'icons/fallback_dot.html'] %}
+                {% else %}
+                    {% set logo_path = 'icons/logo_' ~ mp_data.marketplace.code.lower() ~ '.svg' %}
+                    {% include [logo_path, 'icons/fallback_dot.html'] %}
+                {% endif %}
             </div>
             <div>
                 <div style="font-weight: 600; color: var(--text-white);">{{ mp_data.marketplace.name }}</div>

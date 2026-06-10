@@ -2,7 +2,8 @@ import os
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
-_default_db = f"sqlite:///{os.path.join(BASE_DIR, 'optimize_pro.db')}"
+# Default database configuration
+_default_db = 'sqlite:///' + os.path.join(BASE_DIR, 'optimize_pro.db')
 _database_url = os.environ.get('DATABASE_URL', _default_db)
 
 # Heroku/Render uses 'postgres://' but SQLAlchemy needs 'postgresql://'
