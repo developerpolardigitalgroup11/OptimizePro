@@ -19,6 +19,7 @@ def load_user(user_id):
 def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
+    app.config.setdefault('MAX_CONTENT_LENGTH', 2 * 1024 * 1024)  # 2 MB upload limit
 
     # Initialize extensions
     db.init_app(app)

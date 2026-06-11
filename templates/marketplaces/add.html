@@ -1,28 +1,426 @@
 {% extends "base.html" %}
 {% block title %}Add Marketplace — OptimizePro{% endblock %}
+
+{% block head %}
+<style>
+/* ---- Marketplace Type Dropdown ---- */
+
+/* ---- Section panels ---- */
+.mp-section {
+    display: none;
+    animation: fadeInPanel 0.25s ease;
+}
+.mp-section.visible { display: block; }
+
+@keyframes fadeInPanel {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Color picker row ---- */
+.color-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.color-swatch-input {
+    width: 50px;
+    height: 42px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    cursor: pointer;
+    padding: 3px;
+    transition: border-color 0.2s;
+}
+.color-swatch-input:hover { border-color: var(--accent-primary); }
+
+.color-hex-input {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: 'Inter', monospace;
+    font-size: 0.9rem;
+    transition: all 0.15s ease;
+}
+.color-hex-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+
+/* ---- Logo upload area ---- */
+.logo-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.logo-upload-area:hover,
+.logo-upload-area.drag-over {
+    border-color: var(--accent-primary);
+    background: rgba(99,102,241,0.06);
+}
+
+.logo-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+}
+
+.logo-upload-icon { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.6; }
+.logo-upload-label { font-size: 0.85rem; color: var(--text-secondary); }
+.logo-upload-hint  { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+.logo-preview-wrap {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+.logo-preview-wrap.visible { display: flex; }
+.logo-preview-wrap img {
+    width: 44px; height: 44px;
+    object-fit: contain;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    padding: 4px;
+}
+.logo-preview-name {
+    flex: 1;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.logo-remove-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s;
+}
+.logo-remove-btn:hover { color: var(--color-danger); }
+
+/* ---- Auto-extract indicator ---- */
+.auto-color-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--color-success);
+    background: rgba(34,197,94,0.12);
+    border-radius: var(--radius-full);
+    padding: 3px 10px;
+    margin-left: 0.5rem;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.auto-color-badge.visible { opacity: 1; }
+
+/* ---- Divider ---- */
+.form-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.5rem 0;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>Add Marketplace</h1>
     <a href="{{ url_for('marketplaces.list_marketplaces') }}" class="btn btn-secondary">← Back</a>
 </div>
+
 <div class="card">
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data" id="addMpForm">
+
+        <!-- ① Marketplace Type -->
         <div class="form-group">
-            <label for="platform">Platform</label>
-            <select id="platform" name="platform" class="form-control" required>
-                <option value="" disabled selected>Select an e-commerce platform</option>
-                <option value="amazon">Amazon</option>
-                <option value="flipkart">Flipkart</option>
-                <option value="meesho">Meesho</option>
-                <option value="myntra">Myntra</option>
+            <label for="marketplaceTypeSelect">Marketplace Type</label>
+            <select id="marketplaceTypeSelect" class="form-control" onchange="switchType(this.value)">
+                <option value="ecommerce">🛒 E-commerce</option>
+                <option value="other">✏️ Other</option>
             </select>
-            <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">Name, color, and logo will be automatically assigned.</small>
+            <input type="hidden" name="marketplace_type" id="marketplaceType" value="ecommerce">
         </div>
+
+        <div class="form-divider"></div>
+
+        <!-- ② E-commerce panel -->
+        <div id="sectionEcommerce" class="mp-section visible">
+            <div class="form-group">
+                <label for="platform">Select Platform</label>
+                <select id="platform" name="platform" class="form-control">
+                    <option value="" disabled selected>Choose an e-commerce platform</option>
+                    <option value="amazon">Amazon</option>
+                    <option value="flipkart">Flipkart</option>
+                    <option value="meesho">Meesho</option>
+                    <option value="myntra">Myntra</option>
+                </select>
+                <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
+                    Name, color, and logo are automatically assigned for known platforms.
+                </small>
+            </div>
+        </div>
+
+        <!-- ③ Other panel -->
+        <div id="sectionOther" class="mp-section">
+
+            <!-- Name -->
+            <div class="form-group">
+                <label for="customName">Marketplace Name</label>
+                <input type="text" id="customName" name="custom_name" class="form-control"
+                       placeholder="e.g. My Store, Local Market…" maxlength="100">
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="form-group">
+                <label>
+                    Logo
+                    <span class="auto-color-badge" id="autoColorBadge">✓ Color auto-extracted</span>
+                </label>
+
+                <div class="logo-upload-area" id="logoDropZone">
+                    <input type="file" id="logoFile" name="logo_file"
+                           accept="image/png,image/jpeg,image/svg+xml,image/webp,image/gif"
+                           onchange="handleLogoChange(this)">
+                    <div class="logo-upload-icon">🖼️</div>
+                    <div class="logo-upload-label">Click or drag &amp; drop to upload logo</div>
+                    <div class="logo-upload-hint">PNG, JPG, SVG, WEBP — max 2 MB</div>
+                </div>
+
+                <div class="logo-preview-wrap" id="logoPreviewWrap">
+                    <img id="logoPreviewImg" src="" alt="Logo preview">
+                    <span class="logo-preview-name" id="logoPreviewName"></span>
+                    <button type="button" class="logo-remove-btn" onclick="removeLogo()" title="Remove logo">✕</button>
+                </div>
+            </div>
+
+            <!-- Color picker -->
+            <div class="form-group">
+                <label for="customColor">Brand Color</label>
+                <div class="color-row">
+                    <input type="color" id="colorPicker" class="color-swatch-input"
+                           value="#6366f1" oninput="syncColorFromPicker(this.value)">
+                    <input type="text"  id="colorHex"    class="color-hex-input"
+                           value="#6366f1" maxlength="7" placeholder="#rrggbb"
+                           oninput="syncColorFromHex(this.value)"
+                           pattern="^#[0-9a-fA-F]{6}$">
+                    <input type="hidden" name="custom_color" id="customColor" value="#6366f1">
+                </div>
+                <small style="color: var(--text-muted); margin-top: 0.5rem; display: block;">
+                    Upload a logo to auto-detect the brand color, or pick one manually.
+                </small>
+            </div>
+        </div>
+
+        <!-- ④ Priority (shared) -->
+        <div class="form-divider"></div>
         <div class="form-group">
-            <label for="priority">Priority (higher = more important)</label>
-            <input type="number" id="priority" name="priority" class="form-control" value="1" min="1" max="10">
+            <label for="priority">Priority <small style="color:var(--text-muted); font-weight:400;">(1 = lowest, 10 = highest)</small></label>
+            <input type="number" id="priority" name="priority" class="form-control"
+                   value="1" min="1" max="10">
         </div>
-        <button type="submit" class="btn btn-primary">Add Marketplace</button>
+
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="submitBtn">
+            Add Marketplace
+        </button>
     </form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* ======================================
+   Type dropdown
+====================================== */
+function switchType(type) {
+    const isEcommerce = type === 'ecommerce';
+
+    document.getElementById('marketplaceType').value = type;
+
+    document.getElementById('sectionEcommerce').classList.toggle('visible', isEcommerce);
+    document.getElementById('sectionOther').classList.toggle('visible', !isEcommerce);
+
+    // Flip required attrs so browser validation works correctly
+    const platformSel = document.getElementById('platform');
+    const customName  = document.getElementById('customName');
+    platformSel.required = isEcommerce;
+    customName.required  = !isEcommerce;
+}
+
+// Initialise on load
+switchType('ecommerce');
+
+/* ======================================
+   Color sync
+====================================== */
+function syncColorFromPicker(hex) {
+    document.getElementById('colorHex').value   = hex;
+    document.getElementById('customColor').value = hex;
+}
+
+function syncColorFromHex(hex) {
+    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+        document.getElementById('colorPicker').value  = hex;
+        document.getElementById('customColor').value  = hex;
+    }
+}
+
+/* ======================================
+   Logo upload & color extraction
+====================================== */
+function handleLogoChange(input) {
+    if (!input.files || !input.files[0]) return;
+    const file = input.files[0];
+
+    if (file.size > 2 * 1024 * 1024) {
+        alert('Logo file must be 2 MB or smaller.');
+        input.value = '';
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const dataUrl = e.target.result;
+        document.getElementById('logoPreviewImg').src = dataUrl;
+        document.getElementById('logoPreviewName').textContent = file.name;
+        document.getElementById('logoPreviewWrap').classList.add('visible');
+
+        // Auto-extract dominant color (raster images only)
+        if (!file.name.endsWith('.svg')) {
+            extractDominantColor(dataUrl);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+    document.getElementById('logoFile').value = '';
+    document.getElementById('logoPreviewImg').src = '';
+    document.getElementById('logoPreviewWrap').classList.remove('visible');
+    document.getElementById('autoColorBadge').classList.remove('visible');
+}
+
+/**
+ * Extract the dominant / most-saturated color from a logo using a canvas.
+ * Works for PNG/JPG/WEBP; SVGs are skipped (CORS/taint restrictions).
+ */
+function extractDominantColor(dataUrl) {
+    const img = new Image();
+    img.onload = function () {
+        const canvas = document.createElement('canvas');
+        const SIZE   = 80; // downsample for speed
+        canvas.width = canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, SIZE, SIZE);
+
+        let bestColor = null, bestScore = -1;
+        const data = ctx.getImageData(0, 0, SIZE, SIZE).data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+            if (a < 128) continue;          // skip transparent pixels
+
+            // Prefer vivid / saturated colors (high saturation, mid lightness)
+            const [h, s, l] = rgbToHsl(r, g, b);
+            const score = s * (1 - Math.abs(l - 0.45));   // peak at L≈0.45
+            if (score > bestScore) {
+                bestScore = score;
+                bestColor = { r, g, b };
+            }
+        }
+
+        if (bestColor && bestScore > 0.1) {
+            const hex = rgbToHex(bestColor.r, bestColor.g, bestColor.b);
+            document.getElementById('colorPicker').value  = hex;
+            document.getElementById('colorHex').value     = hex;
+            document.getElementById('customColor').value  = hex;
+            document.getElementById('autoColorBadge').classList.add('visible');
+        }
+    };
+    img.onerror = function () {};
+    img.src = dataUrl;
+}
+
+function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r,g,b), min = Math.min(r,g,b);
+    let h, s, l = (max+min)/2;
+    if (max === min) { h = s = 0; }
+    else {
+        const d = max - min;
+        s = l > 0.5 ? d/(2-max-min) : d/(max+min);
+        switch (max) {
+            case r: h = ((g-b)/d + (g<b?6:0))/6; break;
+            case g: h = ((b-r)/d + 2)/6; break;
+            case b: h = ((r-g)/d + 4)/6; break;
+        }
+    }
+    return [h, s, l];
+}
+
+function rgbToHex(r, g, b) {
+    return '#' + [r,g,b].map(x => x.toString(16).padStart(2,'0')).join('');
+}
+
+/* ======================================
+   Drag-and-drop
+====================================== */
+const dropZone = document.getElementById('logoDropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const fileInput = document.getElementById('logoFile');
+    const dt = e.dataTransfer;
+    if (dt.files && dt.files[0]) {
+        // Assign to the file input via DataTransfer trick
+        fileInput.files = dt.files;
+        handleLogoChange(fileInput);
+    }
+});
+
+/* ======================================
+   Form submit guard
+====================================== */
+document.getElementById('addMpForm').addEventListener('submit', function (e) {
+    const type = document.getElementById('marketplaceType').value;
+    if (type === 'ecommerce') {
+        if (!document.getElementById('platform').value) {
+            e.preventDefault();
+            alert('Please select an e-commerce platform.');
+        }
+    } else {
+        const name = document.getElementById('customName').value.trim();
+        if (!name) {
+            e.preventDefault();
+            alert('Please enter a marketplace name.');
+            document.getElementById('customName').focus();
+        }
+    }
+});
+</script>
 {% endblock %}

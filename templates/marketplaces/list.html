@@ -12,7 +12,12 @@
     <div class="card" style="display: flex; align-items: center; justify-content: space-between;">
         <div style="display: flex; align-items: center; gap: 1rem;">
             <div style="width: 40px; height: 40px; border-radius: var(--radius); background: {{ mp.color }}20; display: flex; align-items: center; justify-content: center;">
-                {% if mp.logo_path %}
+                {% if mp.logo_path and mp.logo_path.startswith('uploads/') %}
+                    {# Uploaded raster/SVG file — serve via static URL #}
+                    <img src="{{ url_for('static', filename=mp.logo_path) }}"
+                         alt="{{ mp.name }} logo"
+                         style="width:28px;height:28px;object-fit:contain;">
+                {% elif mp.logo_path %}
                     {% include [mp.logo_path, 'icons/fallback_dot.html'] %}
                 {% else %}
                     {% set logo_path = 'icons/logo_' ~ mp.code.lower() ~ '.svg' %}

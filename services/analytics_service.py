@@ -5,21 +5,32 @@ from models import db, DailySalesSummary, Forecast, RecommendationOutcome, Produ
 from cache import cache_get, cache_set
 
 
-def get_prediction_accuracy(user_id, days=30, marketplace_id=None):
+def _resolve_date_range(days=30, date_from=None, date_to=None):
+    """Return (cutoff_date, end_date, span_days) from either explicit dates or a days count."""
+    end = date_to if isinstance(date_to, date) else date.today()
+    if date_from and isinstance(date_from, date):
+        cutoff = date_from
+    else:
+        cutoff = end - timedelta(days=days)
+    span = max((end - cutoff).days, 1)
+    return cutoff, end, span
+
+
+def get_prediction_accuracy(user_id, days=30, marketplace_id=None, date_from=None, date_to=None):
     """Calculate MAPE (Mean Absolute Percentage Error) for forecasts."""
-    cache_key = f'analytics_accuracy_{user_id}_{days}_{marketplace_id}'
+    cutoff, end, span = _resolve_date_range(days, date_from, date_to)
+    cache_key = f'analytics_accuracy_{user_id}_{cutoff}_{end}_{marketplace_id}'
     cached = cache_get(cache_key)
     if cached:
         return cached
 
-    cutoff = date.today() - timedelta(days=days)
     products = Product.query.filter_by(user_id=user_id, is_active=True).all()
     product_ids = [p.id for p in products]
 
     forecasts = Forecast.query.filter(
         Forecast.product_id.in_(product_ids),
         Forecast.forecast_date >= cutoff,
-        Forecast.forecast_date <= date.today(),
+        Forecast.forecast_date <= end,
     )
     if marketplace_id:
         forecasts = forecasts.filter(Forecast.marketplace_id == marketplace_id)
@@ -71,14 +82,15 @@ def get_prediction_accuracy(user_id, days=30, marketplace_id=None):
     return result
 
 
-def get_predicted_vs_actual(product_id, marketplace_id, days=30):
+def get_predicted_vs_actual(product_id, marketplace_id, days=30, date_from=None, date_to=None):
     """Get day-by-day predicted vs actual pairs."""
-    cutoff = date.today() - timedelta(days=days)
+    cutoff, end, span = _resolve_date_range(days, date_from, date_to)
 
     summaries = DailySalesSummary.query.filter(
         DailySalesSummary.product_id == product_id,
         DailySalesSummary.marketplace_id == marketplace_id,
         DailySalesSummary.summary_date >= cutoff,
+        DailySalesSummary.summary_date <= end,
     ).order_by(DailySalesSummary.summary_date).all()
 
     result = []
@@ -99,20 +111,21 @@ def get_predicted_vs_actual(product_id, marketplace_id, days=30):
     return result
 
 
-def get_financial_impact(user_id, days=30):
+def get_financial_impact(user_id, days=30, date_from=None, date_to=None):
     """Calculate total financial impact from recommendations."""
-    cache_key = f'analytics_financial_{user_id}_{days}'
+    cutoff, end, span = _resolve_date_range(days, date_from, date_to)
+    cache_key = f'analytics_financial_{user_id}_{cutoff}_{end}'
     cached = cache_get(cache_key)
     if cached:
         return cached
 
-    cutoff = date.today() - timedelta(days=days)
     products = Product.query.filter_by(user_id=user_id, is_active=True).all()
     product_ids = [p.id for p in products]
 
     outcomes = RecommendationOutcome.query.filter(
         RecommendationOutcome.product_id.in_(product_ids),
         RecommendationOutcome.recommendation_date >= cutoff,
+        RecommendationOutcome.recommendation_date <= end,
     ).all()
 
     total_profit = sum(o.profit_impact for o in outcomes if o.profit_impact > 0)
@@ -131,14 +144,14 @@ def get_financial_impact(user_id, days=30):
     return result
 
 
-def get_marketplace_comparison(user_id, days=30):
+def get_marketplace_comparison(user_id, days=30, date_from=None, date_to=None):
     """Per-marketplace KPIs for comparison."""
-    cache_key = f'analytics_mp_compare_{user_id}_{days}'
+    cutoff, end, span = _resolve_date_range(days, date_from, date_to)
+    cache_key = f'analytics_mp_compare_{user_id}_{cutoff}_{end}'
     cached = cache_get(cache_key)
     if cached:
         return cached
 
-    cutoff = date.today() - timedelta(days=days)
     marketplaces = Marketplace.query.filter_by(user_id=user_id, is_active=True).all()
     products = Product.query.filter_by(user_id=user_id, is_active=True).all()
     product_ids = [p.id for p in products]
@@ -149,6 +162,7 @@ def get_marketplace_comparison(user_id, days=30):
             DailySalesSummary.product_id.in_(product_ids),
             DailySalesSummary.marketplace_id == mp.id,
             DailySalesSummary.summary_date >= cutoff,
+            DailySalesSummary.summary_date <= end,
         ).all()
 
         total_revenue = sum(s.total_revenue for s in summaries)
@@ -163,31 +177,33 @@ def get_marketplace_comparison(user_id, days=30):
             'revenue': round(total_revenue, 2),
             'units_sold': total_units,
             'profit': round(total_revenue - total_cost, 2),
-            'avg_daily_units': round(total_units / max(days, 1), 1),
+            'avg_daily_units': round(total_units / max(span, 1), 1),
         })
 
     cache_set(cache_key, result, 300)
     return result
 
 
-def get_revenue_trend(user_id, days=30):
+def get_revenue_trend(user_id, days=30, date_from=None, date_to=None):
     """Daily revenue per marketplace for trend chart."""
-    cutoff = date.today() - timedelta(days=days)
+    cutoff, end, span = _resolve_date_range(days, date_from, date_to)
     products = Product.query.filter_by(user_id=user_id, is_active=True).all()
     product_ids = [p.id for p in products]
     marketplaces = Marketplace.query.filter_by(user_id=user_id, is_active=True).all()
 
     result = {'dates': [], 'datasets': {}}
 
-    # Build date list
-    for i in range(days):
-        d = cutoff + timedelta(days=i + 1)
-        result['dates'].append(d.isoformat())
+    # Build date list from cutoff → end (inclusive)
+    current = cutoff
+    date_list = []
+    while current <= end:
+        date_list.append(current)
+        current += timedelta(days=1)
+    result['dates'] = [d.isoformat() for d in date_list]
 
     for mp in marketplaces:
         daily_rev = []
-        for i in range(days):
-            d = cutoff + timedelta(days=i + 1)
+        for d in date_list:
             summaries = DailySalesSummary.query.filter(
                 DailySalesSummary.product_id.in_(product_ids),
                 DailySalesSummary.marketplace_id == mp.id,

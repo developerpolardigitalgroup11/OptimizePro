@@ -1,5 +1,84 @@
 {% extends "base.html" %}
 {% block title %}Analytics — OptimizePro{% endblock %}
+
+{% block head %}
+<style>
+/* ---- Custom date range ---- */
+.filter-bar { flex-wrap: wrap; gap: 1rem; }
+
+.date-range-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.date-range-sep {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.date-input {
+    padding: 0.45rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    transition: border-color 0.15s;
+    cursor: pointer;
+}
+.date-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+/* Style the native date picker icon */
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+}
+
+.filter-divider {
+    width: 1px;
+    height: 26px;
+    background: var(--border);
+}
+
+.btn-apply-range {
+    padding: 0.45rem 1rem;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+.btn-apply-range:hover {
+    background: var(--accent-primary-hover);
+    transform: translateY(-1px);
+}
+
+.range-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Active pill highlight override when custom range is set */
+.date-pill.custom-active {
+    background: var(--accent-secondary);
+    color: white;
+    border-color: var(--accent-secondary);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>Analytics Dashboard</h1>
@@ -10,13 +89,39 @@
 
 <!-- Filter Bar -->
 <div class="filter-bar">
+    <!-- Quick pills -->
     <div class="filter-group">
         <div class="date-pills">
+            {% set is_custom = request.args.get('date_from') and request.args.get('date_to') and not request.args.get('days') %}
             {% for d in [7, 14, 30, 90] %}
-            <a href="?days={{ d }}" class="date-pill {% if days == d %}active{% endif %}">{{ d }}d</a>
+            <a href="?days={{ d }}" class="date-pill {% if days == d and not is_custom %}active{% endif %}">{{ d }}d</a>
             {% endfor %}
         </div>
     </div>
+
+    <div class="filter-divider"></div>
+
+    <!-- Custom date range -->
+    <form class="date-range-form" method="GET" action="" id="dateRangeForm">
+        <span class="range-label">Custom:</span>
+        <input type="date" class="date-input" name="date_from" id="dateFrom"
+               value="{{ date_from }}"
+               max="{{ date_to }}"
+               title="Start date">
+        <span class="date-range-sep">→</span>
+        <input type="date" class="date-input" name="date_to" id="dateTo"
+               value="{{ date_to }}"
+               max="{{ date_to }}"
+               title="End date">
+        <button type="submit" class="btn-apply-range">Apply</button>
+    </form>
+</div>
+
+<!-- Active range indicator -->
+<div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 1.5rem; margin-top: -0.75rem;">
+    Showing data from <strong style="color: var(--text-secondary);">{{ date_from }}</strong>
+    to <strong style="color: var(--text-secondary);">{{ date_to }}</strong>
+    &nbsp;·&nbsp; <span style="color: var(--accent-primary);">{{ days }} days</span>
 </div>
 
 <!-- KPI Row -->
@@ -142,8 +247,13 @@ new Chart(mpCtx, {
 });
 {% endif %}
 
-// Revenue trend
-fetch('/analytics/api/revenue-trend?days={{ days }}')
+// Revenue trend — pass current date range to the API
+const currentParams = new URLSearchParams({
+    date_from: '{{ date_from }}',
+    date_to:   '{{ date_to }}'
+});
+
+fetch('/analytics/api/revenue-trend?' + currentParams.toString())
     .then(r => r.json())
     .then(data => {
         const ctx = document.getElementById('revenueChart').getContext('2d');
@@ -165,12 +275,20 @@ fetch('/analytics/api/revenue-trend?days={{ days }}')
                 interaction: { mode: 'index', intersect: false },
                 scales: {
                     y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9ca3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#9ca3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } }
+                    x: { grid: { display: false }, ticks: { color: '#9ca3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } }
                 },
                 plugins: { legend: { labels: { color: '#9ca3b8' } } }
             }
         });
     });
+
+// Keep date pickers in sync (to can't be before from)
+document.getElementById('dateFrom').addEventListener('change', function () {
+    document.getElementById('dateTo').min = this.value;
+});
+document.getElementById('dateTo').addEventListener('change', function () {
+    document.getElementById('dateFrom').max = this.value;
+});
 </script>
 {% endblock %}
 {% endblock %}

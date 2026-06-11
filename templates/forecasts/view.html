@@ -1,8 +1,159 @@
 {% extends "base.html" %}
 {% block title %}Forecasts — OptimizePro{% endblock %}
+
+{% block head %}
+<style>
+/* ---- Forecast filter bar ---- */
+.forecast-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.75rem;
+    padding: 0.9rem 1.25rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.forecast-filter-bar .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.filter-divider {
+    width: 1px;
+    height: 26px;
+    background: var(--border);
+}
+
+/* Horizon pills */
+.horizon-pills {
+    display: flex;
+    gap: 0.35rem;
+}
+.horizon-pill {
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+.horizon-pill:hover { border-color: var(--accent-primary); color: var(--accent-primary); }
+.horizon-pill.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+/* Date inputs */
+.date-range-form {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.date-range-sep { color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+
+.date-input {
+    padding: 0.42rem 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    transition: border-color 0.15s;
+    cursor: pointer;
+}
+.date-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+}
+.date-input::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+
+.btn-apply-range {
+    padding: 0.42rem 1rem;
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+}
+.btn-apply-range:hover { background: var(--accent-primary-hover); transform: translateY(-1px); }
+
+
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
     <h1>Demand Forecasts</h1>
+</div>
+
+<!-- Forecast Filter Bar -->
+<div class="forecast-filter-bar">
+
+    <!-- Historical window pills -->
+    <div class="filter-group">
+        <span class="filter-label">History window:</span>
+        <div class="horizon-pills">
+            {% for d in [14, 30, 60, 90] %}
+            <a href="?hist_days={{ d }}&horizon={{ horizon }}" 
+               class="horizon-pill {% if hist_days == d and not request.args.get('hist_from') %}active{% endif %}">
+                {{ d }}d
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="filter-divider"></div>
+
+    <!-- Custom historical range -->
+    <form class="date-range-form" method="GET" id="histRangeForm">
+        <span class="filter-label">Custom history:</span>
+        <input type="date" class="date-input" name="hist_from" id="histFrom"
+               value="{{ hist_from }}" max="{{ hist_to }}" title="History start">
+        <span class="date-range-sep">→</span>
+        <input type="date" class="date-input" name="hist_to" id="histTo"
+               value="{{ hist_to }}" title="History end">
+        <input type="hidden" name="horizon" value="{{ horizon }}">
+        <button type="submit" class="btn-apply-range">Apply</button>
+    </form>
+
+    <div class="filter-divider"></div>
+
+    <!-- Forecast horizon pills -->
+    <div class="filter-group">
+        <span class="filter-label">Forecast horizon:</span>
+        <div class="horizon-pills">
+            {% for h in [7, 14, 30] %}
+            <a href="?hist_days={{ hist_days }}&hist_from={{ hist_from }}&hist_to={{ hist_to }}&horizon={{ h }}"
+               class="horizon-pill {% if horizon == h %}active{% endif %}">
+                {{ h }}d
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
 </div>
 
 {% if product_forecasts %}
@@ -27,8 +178,8 @@
                 <div style="font-size: 1.25rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-white);">{{ pf.recommendation.recommended_restock }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 400; font-family: 'Inter';">units</span></div>
             </div>
             <div style="padding: 0.75rem 1rem; background: var(--bg-secondary); border-radius: var(--radius); border-left: 3px solid var(--accent-primary); flex: 1; min-width: 200px;">
-                <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Predicted 14-Day Demand</div>
-                <div style="font-size: 1.25rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-white);">{{ pf.recommendation.total_daily_demand * 14 | round | int }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 400; font-family: 'Inter';">units total</span></div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">{{ horizon }}-Day Forecast Demand</div>
+                <div style="font-size: 1.25rem; font-family: 'Outfit'; font-weight: 700; color: var(--text-white);">{{ (pf.recommendation.total_daily_demand * horizon) | round | int }} <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 400; font-family: 'Inter';">units total</span></div>
             </div>
             {% endif %}
         </div>
@@ -50,9 +201,7 @@
                         <tr>
                             <th>Marketplace</th>
                             <th>Daily Demand</th>
-                            <th>14-Day Forecast</th>
-                            <th>Confidence Range</th>
-                            <th>Model</th>
+                            <th>{{ horizon }}-Day Forecast</th>
                             <th>Data Points</th>
                         </tr>
                     </thead>
@@ -62,9 +211,7 @@
                         <tr>
                             <td><span class="mp-badge"><span class="mp-dot" style="background: {{ mp_data.marketplace.color }};"></span>{{ mp_data.marketplace.name }}</span></td>
                             <td style="font-weight: 600;">{{ mp_data.forecast.daily_demand }}</td>
-                            <td style="font-weight: 700; font-size: 1.05rem;">{{ mp_data.forecast.total_demand }}</td>
-                            <td style="font-size: 0.8rem; color: var(--text-muted);">{{ mp_data.forecast.confidence_lower }} — {{ mp_data.forecast.confidence_upper }}</td>
-                            <td><span class="priority-badge low" style="background: rgba(99, 102, 241, 0.1); color: var(--accent-primary);">{{ mp_data.forecast.model_used }}</span></td>
+                            <td style="font-weight: 700; font-size: 1.05rem;">{{ (mp_data.forecast.daily_demand * horizon) | round | int }}</td>
                             <td>{{ mp_data.forecast.data_points }} days</td>
                         </tr>
                         {% endif %}
@@ -84,51 +231,51 @@
 {% if product_forecasts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const horizon = {{ horizon }};
+    const histFrom = '{{ hist_from }}';
+    const histTo   = '{{ hist_to }}';
+
     {% for pf in product_forecasts %}
-    fetch('/forecasts/api/product-chart-data/{{ pf.product.id }}')
+    fetch('/forecasts/api/product-chart-data/{{ pf.product.id }}?hist_from=' + histFrom + '&hist_to=' + histTo + '&horizon=' + horizon)
         .then(r => r.json())
         .then(data => {
             document.getElementById('chart-loader-{{ pf.product.id }}').style.display = 'none';
             if (data.error || !data.marketplaces || data.marketplaces.length === 0) return;
-            
+
             const ctx = document.getElementById('chart-{{ pf.product.id }}').getContext('2d');
-            
-            // Build unified dates array from historical + forecast
+
             let allDatesSet = new Set();
             data.marketplaces.forEach(mp => {
                 mp.historical.forEach(h => allDatesSet.add(h.date));
                 mp.forecast.forEach(f => allDatesSet.add(f.date));
             });
             const allDates = Array.from(allDatesSet).sort();
-            
+
             const datasets = [];
-            
+
             data.marketplaces.forEach(mp => {
                 if (mp.historical.length === 0 && mp.forecast.length === 0) return;
-                
-                // Map data to the unified dates array
+
                 const histData = allDates.map(date => {
                     const found = mp.historical.find(h => h.date === date);
                     return found ? found.quantity : null;
                 });
-                
+
                 const forecastData = allDates.map(date => {
                     const found = mp.forecast.find(f => f.date === date);
                     return found ? found.predicted : null;
                 });
-                
-                // Historical bar chart
+
                 datasets.push({
                     type: 'bar',
                     label: mp.name + ' (Historical)',
                     data: histData,
-                    backgroundColor: mp.color + 'B3', // 70% opacity
+                    backgroundColor: mp.color + 'B3',
                     borderColor: mp.color,
                     borderWidth: 1,
                     borderRadius: 3
                 });
-                
-                // Forecast line (dashed)
+
                 datasets.push({
                     type: 'line',
                     label: mp.name + ' (Forecast)',
@@ -141,78 +288,56 @@ document.addEventListener('DOMContentLoaded', function() {
                     pointRadius: 0,
                     pointHoverRadius: 5
                 });
-                
-                // Confidence band (if forecast exists)
+
                 if (mp.forecast.length > 0) {
                     const upperData = allDates.map(date => {
                         const found = mp.forecast.find(f => f.date === date);
                         return found ? found.upper : null;
                     });
-                    
                     const lowerData = allDates.map(date => {
                         const found = mp.forecast.find(f => f.date === date);
                         return found ? found.lower : null;
                     });
-                    
-                    // We draw the confidence band as a filled area between upper and lower bounds
+
                     datasets.push({
-                        type: 'line',
-                        label: mp.name + ' (Upper Bound)',
-                        data: upperData,
-                        borderColor: 'transparent',
-                        backgroundColor: mp.color + '1A', // 10% opacity
-                        fill: '+1', // Fill to next dataset (lower bound)
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        tension: 0.3
+                        type: 'line', label: mp.name + ' (Upper Bound)', data: upperData,
+                        borderColor: 'transparent', backgroundColor: mp.color + '1A',
+                        fill: '+1', pointRadius: 0, pointHoverRadius: 0, tension: 0.3
                     });
-                    
                     datasets.push({
-                        type: 'line',
-                        label: mp.name + ' (Lower Bound)',
-                        data: lowerData,
-                        borderColor: 'transparent',
-                        backgroundColor: 'transparent',
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        tension: 0.3
+                        type: 'line', label: mp.name + ' (Lower Bound)', data: lowerData,
+                        borderColor: 'transparent', backgroundColor: 'transparent',
+                        fill: false, pointRadius: 0, pointHoverRadius: 0, tension: 0.3
                     });
                 }
             });
-            
+
+            // Draw a vertical "today" line via annotation-like approach using labels
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: allDates.map(d => d.slice(5)), // MM-DD
+                    labels: allDates.map(d => d.slice(5)),
                     datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
+                    interaction: { mode: 'index', intersect: false },
                     plugins: {
                         tooltip: {
                             filter: function(tooltipItem) {
-                                // Filter out upper/lower bounds from tooltip, only show actuals and predictions
                                 return !tooltipItem.dataset.label.includes('Bound');
                             }
                         },
                         legend: {
                             labels: {
                                 color: '#9ca3b8',
-                                filter: function(item, chart) {
-                                    // Only show historical series in legend to toggle the whole marketplace
+                                filter: function(item) {
                                     return item.text.includes('(Historical)');
                                 }
                             },
                             onClick: function(e, legendItem, legend) {
-                                const index = legendItem.datasetIndex;
                                 const ci = legend.chart;
-                                // Toggle all datasets for this marketplace
                                 const mpName = legendItem.text.split(' ')[0];
                                 ci.data.datasets.forEach((ds, i) => {
                                     if (ds.label.startsWith(mpName)) {
@@ -232,7 +357,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#9ca3b8', maxRotation: 45, autoSkip: true, maxTicksLimit: 15 }
+                            ticks: { color: '#9ca3b8', maxRotation: 45, autoSkip: true, maxTicksLimit: 18 }
                         }
                     }
                 }
@@ -240,9 +365,18 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => {
             console.error('Error loading chart data for {{ pf.product.id }}:', err);
-            document.getElementById('chart-loader-{{ pf.product.id }}').innerHTML = '<span style="color:var(--color-danger)">Error loading chart data</span>';
+            document.getElementById('chart-loader-{{ pf.product.id }}').innerHTML =
+                '<span style="color:var(--color-danger)">Error loading chart data</span>';
         });
     {% endfor %}
+
+    // Date picker sync
+    document.getElementById('histFrom').addEventListener('change', function () {
+        document.getElementById('histTo').min = this.value;
+    });
+    document.getElementById('histTo').addEventListener('change', function () {
+        document.getElementById('histFrom').max = this.value;
+    });
 });
 </script>
 {% endif %}
