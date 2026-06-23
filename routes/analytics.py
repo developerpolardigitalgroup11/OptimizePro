@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from flask import Blueprint, render_template, request, jsonify
 from flask_login import login_required, current_user
 from models import Product, Marketplace
+from auth import pro_required
 from services.analytics_service import (
     get_prediction_accuracy, get_predicted_vs_actual, get_financial_impact,
     get_marketplace_comparison, get_revenue_trend,
@@ -51,6 +52,7 @@ def _parse_date_params():
 
 @analytics_bp.route('/')
 @login_required
+@pro_required
 def dashboard():
     marketplaces = Marketplace.query.filter_by(user_id=current_user.id, is_active=True).all()
     products = Product.query.filter_by(user_id=current_user.id, is_active=True).order_by(Product.name).all()
@@ -75,6 +77,7 @@ def dashboard():
 
 @analytics_bp.route('/api/predicted-vs-actual')
 @login_required
+@pro_required
 def api_predicted_vs_actual():
     product_id     = request.args.get('product_id', type=int)
     marketplace_id = request.args.get('marketplace_id', type=int)
@@ -90,6 +93,7 @@ def api_predicted_vs_actual():
 
 @analytics_bp.route('/api/revenue-trend')
 @login_required
+@pro_required
 def api_revenue_trend():
     days, date_from, date_to, _, _ = _parse_date_params()
     data = get_revenue_trend(current_user.id, days, date_from=date_from, date_to=date_to)
@@ -98,6 +102,7 @@ def api_revenue_trend():
 
 @analytics_bp.route('/api/marketplace-comparison')
 @login_required
+@pro_required
 def api_marketplace_comparison():
     days, date_from, date_to, _, _ = _parse_date_params()
     data = get_marketplace_comparison(current_user.id, days, date_from=date_from, date_to=date_to)

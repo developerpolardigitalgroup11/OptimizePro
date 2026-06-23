@@ -1,0 +1,91 @@
+{% extends "admin/base.html" %}
+{% block title %}Products{% endblock %}
+
+{% block content %}
+<div class="admin-topbar">
+    <div>
+        <h1 class="admin-page-title">Product Overview</h1>
+        <p class="admin-page-sub">{{ total_products }} product{{ 's' if total_products != 1 }} across all clients</p>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" class="admin-filter-bar">
+    <input type="text" name="q" class="admin-search"
+           placeholder="🔍  Search by name, SKU, category…"
+           value="{{ search }}">
+    <select name="user_id" class="admin-select" onchange="this.form.submit()">
+        <option value="">All Clients</option>
+        {% for u in all_users %}
+        <option value="{{ u.id }}" {% if user_filter == u.id|string %}selected{% endif %}>
+            {{ u.username }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="abtn abtn--ghost">Apply</button>
+    {% if search or user_filter %}
+    <a href="{{ url_for('admin.products') }}" class="abtn abtn--ghost">✕ Clear</a>
+    {% endif %}
+</form>
+
+<!-- Products Table -->
+<div class="admin-card" style="padding:0;">
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Category</th>
+                <th>Cost Price</th>
+                <th>Warehouse Qty</th>
+                <th>Status</th>
+                <th>Owner</th>
+                <th>Created</th>
+            </tr></thead>
+            <tbody>
+            {% for p in products %}
+            <tr>
+                <td>
+                    <div style="font-weight:600; color:white;">{{ p.name }}</div>
+                </td>
+                <td style="font-family:monospace; font-size:0.78rem; color:var(--admin-text-sub);">{{ p.sku }}</td>
+                <td>
+                    <span style="background:rgba(99,102,241,0.1); color:#818cf8; padding:2px 8px; border-radius:6px; font-size:0.72rem; font-weight:600;">
+                        {{ p.category or 'General' }}
+                    </span>
+                </td>
+                <td style="color:white; font-weight:600;">₹{{ '{:,.2f}'.format(p.cost_price) }}</td>
+                <td>
+                    <span style="color:{% if p.total_warehouse_qty == 0 %}#f87171{% elif p.total_warehouse_qty < 10 %}#fbbf24{% else %}#4ade80{% endif %}; font-weight:600;">
+                        {{ p.total_warehouse_qty }}
+                    </span>
+                </td>
+                <td>
+                    {% if p.is_active %}
+                    <span class="abadge abadge--active">Active</span>
+                    {% else %}
+                    <span class="abadge abadge--cancelled">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if p._owner %}
+                    <div style="font-size:0.8rem; color:var(--admin-text-sub);">{{ p._owner.username }}</div>
+                    {% else %}<span style="color:var(--admin-text-muted);">—</span>{% endif %}
+                </td>
+                <td style="color:var(--admin-text-muted); font-size:0.75rem; white-space:nowrap;">
+                    {{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="8">
+                <div class="admin-empty">
+                    <div class="admin-empty-icon">📦</div>
+                    <p>No products found</p>
+                </div>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

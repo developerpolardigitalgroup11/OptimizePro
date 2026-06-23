@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Complete Payment — OptimizePro{% endblock %}
+{% block auth_content %}
+<div class="auth-container">
+    <div class="auth-card" style="max-width: 480px;">
+        <div style="text-align:center; margin-bottom: 1.5rem;">
+            <div class="tier-badge {{ tier.badge_class }}" style="display:inline-block; font-size: 1rem; padding: 0.4rem 1.2rem; margin-bottom: 0.75rem;">
+                {{ tier.name }} Plan
+            </div>
+            <h2 style="margin-bottom: 0.25rem;">Complete your payment</h2>
+            <p class="auth-card .subtitle" style="color: var(--text-muted); font-size:0.9rem;">
+                {{ tier.price_display }} {{ tier.period }}
+            </p>
+        </div>
+
+        <div class="payment-secure-badge">🔒 256-bit SSL encrypted payment</div>
+
+        <form id="paymentForm" style="margin-top:1.5rem;">
+            <input type="hidden" name="tier" value="{{ tier_key }}">
+
+            <div class="form-group">
+                <label>Cardholder Name</label>
+                <input type="text" id="cardName" name="card_name" class="form-control" placeholder="Name on card" required>
+            </div>
+
+            <div class="form-group">
+                <label>Card Number</label>
+                <div class="card-input-wrap">
+                    <input type="text" id="cardNumber" name="card_number" class="form-control card-number-input"
+                           placeholder="1234 5678 9012 3456" maxlength="19" required>
+                    <div class="card-brand-icons">
+                        <svg viewBox="0 0 38 24" class="card-icon"><rect width="38" height="24" rx="4" fill="#1a1d28"/><path d="M14 8h10v8H14z" fill="#FF5F00"/><circle cx="14" cy="12" r="5" fill="#EB001B"/><circle cx="24" cy="12" r="5" fill="#F79E1B"/></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-row">
+                <div class="form-group">
+                    <label>Expiry Date</label>
+                    <input type="text" id="cardExpiry" name="card_expiry" class="form-control" placeholder="MM / YY" maxlength="7" required>
+                </div>
+                <div class="form-group">
+                    <label>CVV</label>
+                    <input type="password" id="cardCvv" name="card_cvv" class="form-control" placeholder="•••" maxlength="4" required>
+                </div>
+            </div>
+
+            <div class="payment-total-row">
+                <span>Total charged today</span>
+                <strong>{{ tier.price_display }}</strong>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg" id="payBtn">
+                <span id="payBtnText">Pay {{ tier.price_display }} Now</span>
+                <div class="btn-loader" id="payLoader" style="display:none;"></div>
+            </button>
+        </form>
+
+        <div class="payment-footnote" style="margin-top:1.5rem;">
+            <a href="{{ url_for('auth.select_tier') }}">← Back to plan selection</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('cardNumber').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g,'').substring(0,16);
+    this.value = v.match(/.{1,4}/g)?.join(' ') || v;
+});
+document.getElementById('cardExpiry').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g,'').substring(0,4);
+    if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+    this.value = v;
+});
+
+document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('payBtn');
+    document.getElementById('payBtnText').style.display = 'none';
+    document.getElementById('payLoader').style.display = 'inline-block';
+    btn.disabled = true;
+
+    const fd = new FormData(this);
+    fd.set('card_number', document.getElementById('cardNumber').value.replace(/\s/g,''));
+
+    await new Promise(r => setTimeout(r, 2000));
+    try {
+        const resp = await fetch('{{ url_for("auth.process_payment") }}', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (data.success) {
+            window.location.href = data.redirect;
+        } else {
+            alert(data.message);
+            document.getElementById('payBtnText').style.display = '';
+            document.getElementById('payLoader').style.display = 'none';
+            btn.disabled = false;
+        }
+    } catch(err) {
+        alert('Network error. Please try again.');
+        document.getElementById('payBtnText').style.display = '';
+        document.getElementById('payLoader').style.display = 'none';
+        btn.disabled = false;
+    }
+});
+</script>
+{% endblock %}

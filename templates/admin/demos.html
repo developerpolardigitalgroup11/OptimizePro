@@ -1,0 +1,177 @@
+{% extends "admin/base.html" %}
+{% block title %}Demo Requests{% endblock %}
+
+{% block content %}
+<div class="admin-topbar">
+    <div>
+        <h1 class="admin-page-title">Demo Requests</h1>
+        <p class="admin-page-sub">Manage and follow up on all demo bookings</p>
+    </div>
+</div>
+
+<!-- Status Tabs -->
+<div class="admin-filter-bar">
+    <div class="status-tabs">
+        <a href="{{ url_for('admin.demos') }}"
+           class="status-tab {% if not status_filter %}active{% endif %}">
+            All ({{ counts.pending + counts.accepted + counts.rejected }})
+        </a>
+        <a href="{{ url_for('admin.demos', status='pending') }}"
+           class="status-tab {% if status_filter == 'pending' %}active{% endif %}">
+            🟡 Pending ({{ counts.pending }})
+        </a>
+        <a href="{{ url_for('admin.demos', status='accepted') }}"
+           class="status-tab {% if status_filter == 'accepted' %}active{% endif %}">
+            🟢 Accepted ({{ counts.accepted }})
+        </a>
+        <a href="{{ url_for('admin.demos', status='rejected') }}"
+           class="status-tab {% if status_filter == 'rejected' %}active{% endif %}">
+            🔴 Rejected ({{ counts.rejected }})
+        </a>
+    </div>
+</div>
+
+<!-- Demo Table -->
+<div class="admin-card" style="padding:0;">
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr>
+                <th>Contact</th>
+                <th>Phone</th>
+                <th>Company</th>
+                <th>Message</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody>
+            {% for d in demo_list %}
+            <tr id="demo-row-{{ d.id }}">
+                <td>
+                    <div style="font-weight:600; color:white;">{{ d.username or '—' }}</div>
+                    <div style="font-size:0.72rem; color:var(--admin-text-muted);">{{ d.email }}</div>
+                </td>
+                <td style="color:var(--admin-text-sub);">{{ d.phone or '—' }}</td>
+                <td style="color:var(--admin-text-sub);">{{ d.company or '—' }}</td>
+                <td style="max-width:200px;">
+                    {% if d.message %}
+                    <span style="font-size:0.78rem; color:var(--admin-text-sub);"
+                          title="{{ d.message }}">
+                        {{ d.message[:60] }}{% if d.message|length > 60 %}…{% endif %}
+                    </span>
+                    {% else %}<span style="color:var(--admin-text-muted);">—</span>{% endif %}
+                </td>
+                <td>
+                    <span class="abadge abadge--{{ d.status }}" id="status-badge-{{ d.id }}">
+                        {% if d.status == 'pending' %}🟡
+                        {% elif d.status == 'accepted' %}🟢
+                        {% elif d.status == 'rejected' %}🔴
+                        {% else %}🔵{% endif %}
+                        {{ d.status|title }}
+                    </span>
+                </td>
+                <td style="color:var(--admin-text-muted); white-space:nowrap;">
+                    {{ d.created_at.strftime('%d %b %Y') if d.created_at else '—' }}
+                </td>
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-start;">
+                        {% if d.status == 'pending' %}
+                        <!-- Accept Form -->
+                        <div style="display:flex; gap:0.4rem; align-items:center; background:rgba(255,255,255,0.03); padding:0.4rem; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                            <select id="tier-select-{{ d.id }}" class="admin-select" style="padding:3px; font-size:0.75rem;">
+                                <option value="pro">Pro</option>
+                                <option value="basic">Basic</option>
+                            </select>
+                            <input type="number" id="days-input-{{ d.id }}" class="admin-search" 
+                                   style="width:50px; padding:3px; font-size:0.75rem;" value="30" min="1" max="365" title="Days">
+                            <span style="font-size:0.7rem; color:var(--admin-text-muted);">days</span>
+                            <button class="abtn abtn--teal abtn--sm" onclick="acceptDemo({{ d.id }}, this)">✓ Accept</button>
+                        </div>
+                        
+                        <!-- Reject Button -->
+                        <button class="abtn abtn--danger abtn--sm" onclick="rejectDemo({{ d.id }}, this)">⛔ Reject Demo</button>
+                        {% elif d.status in ['rejected', 'closed', 'accepted'] %}
+                        <button class="abtn abtn--ghost abtn--sm" onclick="updateStatus({{ d.id }}, 'pending', this)">↩ Reopen</button>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">
+                <div class="admin-empty">
+                    <div class="admin-empty-icon">📅</div>
+                    <p>No demo requests found</p>
+                </div>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const statusMap = {
+    pending:  { icon:'🟡', cls:'abadge--pending'  },
+    accepted: { icon:'🟢', cls:'abadge--accepted' },
+    rejected: { icon:'🔴', cls:'abadge--rejected' },
+};
+
+async function updateStatus(id, newStatus, btn) {
+    btn.disabled = true;
+    const fd = new FormData(); fd.append('status', newStatus);
+    const r = await fetch(`/admin/demos/${id}/status`, {method:'POST', body:fd});
+    const d = await r.json();
+    if (d.success) {
+        location.reload();
+    } else {
+        alert('Update failed.');
+        btn.disabled = false;
+    }
+}
+
+async function acceptDemo(id, btn) {
+    const tier = document.getElementById(`tier-select-${id}`).value;
+    const days = document.getElementById(`days-input-${id}`).value;
+    
+    if (!confirm(`Accept demo and grant ${tier.toUpperCase()} access for ${days} days?`)) return;
+    
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    const fd = new FormData();
+    fd.append('tier', tier);
+    fd.append('days', days);
+
+    const r = await fetch(`/admin/demos/${id}/accept`, {method:'POST', body:fd});
+    const d = await r.json();
+    
+    if (d.success) {
+        location.reload();
+    } else {
+        alert(d.message || 'Accept failed.');
+        btn.disabled = false;
+        btn.textContent = '✓ Accept';
+    }
+}
+
+async function rejectDemo(id, btn) {
+    if (!confirm('Reject and cancel this demo request?')) return;
+    
+    btn.disabled = true;
+    btn.textContent = '...';
+
+    const r = await fetch(`/admin/demos/${id}/reject`, {method:'POST'});
+    const d = await r.json();
+    
+    if (d.success) {
+        location.reload();
+    } else {
+        alert(d.message || 'Reject failed.');
+        btn.disabled = false;
+        btn.textContent = '⛔ Reject Demo';
+    }
+}
+</script>
+{% endblock %}

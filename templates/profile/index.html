@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% block title %}My Profile — OptimizePro{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>My Profile</h1>
+        <p class="page-subtitle">Manage your account, security, and subscription</p>
+    </div>
+    <div class="tier-badge-lg {{ current_user.tier|lower }}-badge-pill">
+        {% if current_user.tier == 'basic' %}{% else %}{% endif %}
+        {{ current_user.tier|title }}
+    </div>
+</div>
+
+<!-- Profile Header Card -->
+<div class="profile-hero-card card" style="margin-bottom: 2rem;">
+    <div class="profile-hero-inner">
+        <!-- Avatar -->
+        <div class="profile-avatar-wrap">
+            <div class="profile-avatar-circle" id="profileAvatar"
+                 style="background: {{ current_user.avatar_color }}; overflow: hidden; position: relative;">
+                {% if current_user.avatar_filename %}
+                    <img src="{{ url_for('static', filename='uploads/avatars/' ~ current_user.avatar_filename) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                    {{ current_user.username[0]|upper }}
+                {% endif %}
+            </div>
+            <div class="profile-avatar-tier-dot tier-dot--{{ current_user.tier }}"></div>
+        </div>
+        <!-- Info -->
+        <div class="profile-hero-info">
+            <h2 class="profile-hero-name">{{ current_user.full_name or current_user.username }}</h2>
+            <div class="profile-hero-meta">
+                <span>@{{ current_user.username }}</span>
+                <span class="profile-hero-sep">·</span>
+                <span>{{ current_user.email }}</span>
+                {% if current_user.company %}
+                <span class="profile-hero-sep">·</span>
+                <span>{{ current_user.company }}</span>
+                {% endif %}
+            </div>
+            <div class="profile-hero-joined">Member since {{ current_user.created_at.strftime('%B %Y') if current_user.created_at else 'N/A' }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="profile-tabs" id="profileTabs">
+    <a href="?tab=info"     class="profile-tab {% if tab == 'info' %}active{% endif %}"     id="tabInfo">Personal Info</a>
+    <a href="?tab=security" class="profile-tab {% if tab == 'security' %}active{% endif %}" id="tabSecurity">Security</a>
+    <a href="?tab=subscription" class="profile-tab {% if tab == 'subscription' %}active{% endif %}" id="tabSubscription">Subscription</a>
+</div>
+
+<!-- ─── TAB: PERSONAL INFO ─── -->
+{% if tab == 'info' %}
+<div class="profile-tab-panel card">
+    <h3 class="profile-section-title">Personal Information</h3>
+    <form method="POST" action="{{ url_for('profile.update') }}" id="profileForm" enctype="multipart/form-data">
+        <div class="profile-form-grid">
+            <div class="form-group">
+                <label for="full_name">Full Name</label>
+                <input type="text" id="full_name" name="full_name" class="form-control"
+                       value="{{ current_user.full_name or '' }}" placeholder="Your full name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control"
+                       value="{{ current_user.email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" class="form-control"
+                       value="{{ current_user.phone or '' }}" placeholder="+91 98765 43210">
+            </div>
+            <div class="form-group">
+                <label for="company">Company / Business Name</label>
+                <input type="text" id="company" name="company" class="form-control"
+                       value="{{ current_user.company or '' }}" placeholder="Your business name">
+            </div>
+        </div>
+
+        <!-- Profile Picture & Avatar Color Picker -->
+        <div class="form-group" style="margin-top: 1.5rem;">
+            <label>Profile Picture</label>
+            
+            <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; background: {{ current_user.avatar_color }}; display: flex; align-items: center; justify-content: center; color: white; font-size: 2rem; font-weight: bold; flex-shrink: 0;">
+                    {% if current_user.avatar_filename %}
+                        <img src="{{ url_for('static', filename='uploads/avatars/' ~ current_user.avatar_filename) }}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        {{ current_user.username[0]|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <input type="file" name="avatar_upload" id="avatar_upload" accept="image/png, image/jpeg" style="display: none;" onchange="document.getElementById('upload-filename').textContent = this.files[0].name;">
+                    <label for="avatar_upload" class="btn btn-secondary btn-sm" style="cursor: pointer; margin-bottom: 0.5rem; display: inline-block;">Upload new photo</label>
+                    <div id="upload-filename" style="font-size: 0.8rem; color: var(--text-muted);">JPG or PNG. Max size 2MB.</div>
+                </div>
+            </div>
+
+            <label style="display: block; margin-bottom: 0.5rem;">Or choose an avatar color:</label>
+            <div class="avatar-color-picker">
+                <input type="hidden" name="remove_avatar" id="remove_avatar" value="0">
+                {% for color in avatar_colors %}
+                <label class="avatar-color-option">
+                    <input type="radio" name="avatar_color" value="{{ color }}"
+                           {% if current_user.avatar_color == color %}checked{% endif %}
+                           onclick="document.getElementById('remove_avatar').value='1';">
+                    <span class="avatar-color-swatch"
+                          style="background: {{ color }};"
+                          title="{{ color }}">
+                        <span class="avatar-color-preview">{{ current_user.username[0]|upper }}</span>
+                    </span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Read-only info -->
+        <div class="profile-readonly-row">
+            <div class="profile-readonly-item">
+                <div class="profile-readonly-label">Username</div>
+                <div class="profile-readonly-value">@{{ current_user.username }}</div>
+                <div class="profile-readonly-hint">Username cannot be changed</div>
+            </div>
+            <div class="profile-readonly-item">
+                <div class="profile-readonly-label">Account Created</div>
+                <div class="profile-readonly-value">{{ current_user.created_at.strftime('%d %B %Y') if current_user.created_at else '—' }}</div>
+            </div>
+        </div>
+
+        <div class="profile-form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="reset" class="btn btn-secondary">Reset</button>
+        </div>
+    </form>
+</div>
+
+<!-- ─── TAB: SECURITY ─── -->
+{% elif tab == 'security' %}
+<div class="profile-tab-panel card">
+    <h3 class="profile-section-title">Change Password</h3>
+    <p class="profile-section-sub">Choose a strong password and don't reuse it for other websites.</p>
+
+    <form method="POST" action="{{ url_for('profile.change_password') }}" style="max-width: 480px;" id="pwForm">
+        <div class="form-group">
+            <label for="current_password">Current Password</label>
+            <div class="input-with-icon">
+                <input type="password" id="current_password" name="current_password" class="form-control form-control-icon"
+                       placeholder="Enter current password" required>
+                <button type="button" class="input-toggle-pw" onclick="togglePw('current_password', this)" tabindex="-1">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="new_password">New Password</label>
+            <div class="input-with-icon">
+                <input type="password" id="new_password" name="new_password" class="form-control form-control-icon"
+                       placeholder="At least 6 characters" required minlength="6">
+                <button type="button" class="input-toggle-pw" onclick="togglePw('new_password', this)" tabindex="-1">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+            <div class="pw-strength" id="pwStrength" style="display:none;">
+                <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+                <span class="pw-strength-label" id="pwStrengthLabel"></span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="confirm_password">Confirm New Password</label>
+            <div class="input-with-icon">
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control form-control-icon"
+                       placeholder="Repeat new password" required>
+                <button type="button" class="input-toggle-pw" onclick="togglePw('confirm_password', this)" tabindex="-1">
+                    <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                </button>
+            </div>
+            <div class="pw-match-hint" id="pwMatch"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Update Password</button>
+    </form>
+
+    <!-- Security Info -->
+    <div class="security-info-block" style="margin-top: 2rem;">
+        <h3 class="profile-section-title" style="margin-bottom: 0.75rem;">Security Tips</h3>
+        <div class="security-tips">
+            <div class="security-tip">🔐 Use at least 12 characters with letters, numbers & symbols</div>
+            <div class="security-tip">🚫 Never share your password with anyone</div>
+            <div class="security-tip">🔄 Change your password every 90 days</div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── TAB: SUBSCRIPTION ─── -->
+{% elif tab == 'subscription' %}
+<div class="profile-tab-panel">
+    <!-- Current Plan -->
+    <div class="card subscription-current-card" style="margin-bottom: 1.5rem;">
+        <div class="subscription-header">
+            <div>
+                <h3 class="profile-section-title">Current Plan</h3>
+                <div class="subscription-plan-display">
+                    <div class="tier-badge-lg tier-{{ current_user.tier }}">
+                        {% if current_user.tier == 'basic' %}Basic
+                        {% else %}Pro{% endif %}
+                    </div>
+                    {% if current_user.tier != 'basic' and current_user.tier_expires_at %}
+                    <div class="subscription-expiry">
+                        Renews {{ current_user.tier_expires_at.strftime('%d %B %Y') }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if current_user.tier != 'basic' %}
+            <form method="POST" action="{{ url_for('profile.cancel') }}"
+                  onsubmit="return confirm('Cancel your subscription and downgrade to Basic?')">
+                <button type="submit" class="btn btn-secondary btn-sm">Cancel Subscription</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Upgrade Plans & Demo -->
+    {% if current_user.tier == 'basic' %}
+    <h3 class="profile-section-title" style="margin-bottom: 1rem;">Upgrade Your Plan</h3>
+    <div class="tier-grid tier-grid--compact">
+
+        <!-- Pro Card -->
+        <div class="tier-card tier-card--pro">
+            {% if tiers.pro.popular %}<div class="popular-ribbon">Most Popular</div>{% endif %}
+            <div class="tier-card-header">
+                <div class="tier-icon"></div>
+                <div class="tier-badge tier-pro">Pro</div>
+            </div>
+
+            <ul class="tier-features">
+                {% for f in tiers.pro.features %}<li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{{ f }}</li>{% endfor %}
+            </ul>
+            <button class="btn btn-tier btn-tier--pro" onclick="openUpgradeContactModal()" style="margin-top: 1rem;">Contact Team to Upgrade</button>
+        </div>
+
+
+    </div>
+    {% else %}
+    <div class="card" style="text-align:center; padding: 3rem;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+        <h3>You're on the Pro tier!</h3>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">You have access to all advanced features. Thank you for your support.</p>
+    </div>
+    {% endif %}
+
+    <!-- Billing History -->
+    <div class="card" style="margin-top: 1.5rem;">
+        <h3 class="profile-section-title" style="margin-bottom: 1rem;">Billing History</h3>
+        {% if subscriptions %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Plan</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Transaction ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions %}
+                    <tr>
+                        <td>{{ sub.created_at.strftime('%d %b %Y') if sub.created_at else '—' }}</td>
+                        <td>
+                            <span class="tier-badge tier-{{ sub.plan }}">
+                                {% if sub.plan == 'basic' or sub.plan == 'free' %}Basic{% else %}Pro{% endif %}
+                            </span>
+                        </td>
+                        <td>{% if sub.amount == 0 %}Free{% else %}₹{{ '{:,.0f}'.format(sub.amount) }}{% endif %}</td>
+                        <td>
+                            <span class="status-badge {% if sub.status == 'active' %}applied{% else %}draft{% endif %}">
+                                {{ sub.status|title }}
+                            </span>
+                        </td>
+                        <td style="font-family: monospace; font-size: 0.75rem; color: var(--text-muted);">
+                            {{ sub.transaction_id[:16] ~ '…' if sub.transaction_id else '—' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 2rem;">
+            <div class="icon">📋</div>
+            <p>No billing history yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ─── Upgrade Payment Modal ─── -->
+<div class="modal-overlay" id="upgradeOverlay" onclick="closeUpgradeModal(event)">
+    <div class="payment-modal" id="upgradeModal">
+        <div class="payment-modal-header">
+            <div>
+                <div class="payment-modal-title">Upgrade Plan</div>
+                <div class="payment-modal-subtitle" id="upgradePlanLabel"></div>
+            </div>
+            <button class="payment-close-btn" onclick="closeUpgradeModal(null, true)">✕</button>
+        </div>
+
+        <div id="upgradeFormState">
+            <div class="payment-secure-badge">🔒 256-bit SSL encrypted payment</div>
+            <form id="upgradeForm">
+                <input type="hidden" id="upgradeTier" name="tier" value="">
+                <div class="form-group">
+                    <label>Cardholder Name</label>
+                    <input type="text" id="uCardName" name="card_name" class="form-control" placeholder="Name on card" required>
+                </div>
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <div class="card-input-wrap">
+                        <input type="text" id="uCardNumber" name="card_number" class="form-control card-number-input"
+                               placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        <div class="card-brand-icons">
+                            <svg viewBox="0 0 38 24" class="card-icon"><rect width="38" height="24" rx="4" fill="#1a1d28"/><path d="M14 8h10v8H14z" fill="#FF5F00"/><circle cx="14" cy="12" r="5" fill="#EB001B"/><circle cx="24" cy="12" r="5" fill="#F79E1B"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="payment-row">
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="text" id="uCardExpiry" name="card_expiry" class="form-control" placeholder="MM / YY" maxlength="7" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <input type="password" id="uCardCvv" name="card_cvv" class="form-control" placeholder="•••" maxlength="4" required>
+                    </div>
+                </div>
+                <div class="payment-total-row">
+                    <span>Total charged today</span>
+                    <strong id="upgradeTotalAmount"></strong>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="upgradePayBtn">
+                    <span id="upgradePayBtnText">Pay Now</span>
+                    <div class="btn-loader" id="upgradePayLoader" style="display:none;"></div>
+                </button>
+            </form>
+            <div class="payment-footnote">Use card ending <strong>0000</strong> to simulate a declined payment.</div>
+        </div>
+
+        <div id="upgradeProcessingState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-spinner"></div>
+                <div class="payment-status-title">Processing…</div>
+            </div>
+        </div>
+        <div id="upgradeSuccessState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-success-icon">✓</div>
+                <div class="payment-status-title">Upgrade Successful!</div>
+                <div class="payment-status-sub" id="upgradeSuccessMsg"></div>
+            </div>
+        </div>
+        <div id="upgradeFailureState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-fail-icon">✕</div>
+                <div class="payment-status-title">Payment Declined</div>
+                <div class="payment-status-sub" id="upgradeFailMsg"></div>
+                <button class="btn btn-secondary" onclick="resetUpgradeModal()" style="margin-top:1.5rem;">Try Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Book Demo Modal ─── -->
+<div class="modal-overlay" id="demoOverlay" onclick="closeDemoModal(event)">
+    <div class="payment-modal" id="demoModal">
+        <div class="payment-modal-header">
+            <div>
+                <div class="payment-modal-title">Book a Demo</div>
+                <div class="payment-modal-subtitle">We'll show you how Pro features can help you scale.</div>
+            </div>
+            <button class="payment-close-btn" onclick="closeDemoModal(null, true)">✕</button>
+        </div>
+
+        <div id="demoFormState">
+            <form id="demoForm">
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" class="form-control" value="{{ current_user.email }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone" class="form-control" value="{{ current_user.phone or '' }}" placeholder="For a quick callback (optional)">
+                </div>
+                <div class="form-group">
+                    <label>Company / Brand Name</label>
+                    <input type="text" name="company" class="form-control" value="{{ current_user.company or '' }}" placeholder="Who are you selling as? (optional)">
+                </div>
+                <div class="form-group">
+                    <label>What would you like to see?</label>
+                    <textarea name="message" class="form-control" rows="3" placeholder="E.g. I want to see the ML forecasting in action..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="demoSubmitBtn">Request Demo</button>
+            </form>
+        </div>
+        <div id="demoSuccessState" style="display:none; padding: 2rem 0; text-align: center;">
+            <div class="payment-success-icon" style="margin: 0 auto 1rem;">✓</div>
+            <div class="payment-status-title">Request Received!</div>
+            <div class="payment-status-sub" id="demoSuccessMsg"></div>
+            <button class="btn btn-secondary" onclick="closeDemoModal(null, true)" style="margin-top:1.5rem;">Close</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Password toggle
+function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.classList.toggle('active');
+}
+
+// ── Avatar color picker live preview
+document.querySelectorAll('input[name="avatar_color"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.getElementById('profileAvatar').style.background = this.value;
+    });
+});
+
+// ── Password strength (security tab)
+const pwInp = document.getElementById('new_password');
+const confInp = document.getElementById('confirm_password');
+if (pwInp) {
+    pwInp.addEventListener('input', () => {
+        const pw = pwInp.value;
+        const bar = document.getElementById('pwStrength');
+        const fill = document.getElementById('pwStrengthFill');
+        const lbl = document.getElementById('pwStrengthLabel');
+        if (!pw) { bar.style.display='none'; return; }
+        bar.style.display = 'flex';
+        let s=0;
+        if(pw.length>=6)s++;if(pw.length>=10)s++;if(/[A-Z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+        const labels=['','Weak','Fair','Good','Strong','Very Strong'];
+        const colors=['','#ef4444','#f59e0b','#eab308','#22c55e','#14b8a6'];
+        fill.style.width=Math.min(100,s*20)+'%';fill.style.background=colors[s];lbl.textContent=labels[s];lbl.style.color=colors[s];
+        checkMatch();
+    });
+    confInp && confInp.addEventListener('input', checkMatch);
+    function checkMatch() {
+        const pw = pwInp?.value;
+        const conf = confInp?.value;
+        const hint = document.getElementById('pwMatch');
+        if (!conf||!hint) return;
+        if (pw===conf){hint.textContent='✓ Passwords match';hint.className='pw-match-hint match-ok';}
+        else{hint.textContent='✗ Passwords do not match';hint.className='pw-match-hint match-fail';}
+    }
+}
+
+// ── Upgrade Modal
+function openUpgradeModal(tier, priceLabel, amount) {
+    document.getElementById('upgradeTier').value = tier;
+    document.getElementById('upgradePlanLabel').textContent = tier.charAt(0).toUpperCase()+tier.slice(1)+' — '+priceLabel+'/month';
+    document.getElementById('upgradeTotalAmount').textContent = priceLabel;
+    resetUpgradeModal();
+    document.getElementById('upgradeOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeUpgradeModal(evt, force) {
+    if (force || (evt && evt.target === document.getElementById('upgradeOverlay'))) {
+        document.getElementById('upgradeOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function resetUpgradeModal() {
+    ['upgradeProcessingState','upgradeSuccessState','upgradeFailureState'].forEach(id=>{document.getElementById(id).style.display='none';});
+    document.getElementById('upgradeFormState').style.display='';
+    document.getElementById('upgradePayBtn').disabled=false;
+    document.getElementById('upgradePayBtnText').style.display='';
+    document.getElementById('upgradePayLoader').style.display='none';
+}
+
+document.getElementById('uCardNumber')?.addEventListener('input',function(){
+    let v=this.value.replace(/\D/g,'').substring(0,16);
+    this.value=v.match(/.{1,4}/g)?.join(' ')||v;
+});
+document.getElementById('uCardExpiry')?.addEventListener('input',function(){
+    let v=this.value.replace(/\D/g,'').substring(0,4);
+    if(v.length>=2)v=v.substring(0,2)+' / '+v.substring(2);
+    this.value=v;
+});
+
+document.getElementById('upgradeForm')?.addEventListener('submit', async function(e){
+    e.preventDefault();
+    document.getElementById('upgradeFormState').style.display='none';
+    document.getElementById('upgradeProcessingState').style.display='';
+    const fd=new FormData(this);
+    fd.set('card_number', document.getElementById('uCardNumber').value.replace(/\s/g,''));
+    await new Promise(r=>setTimeout(r,2000));
+    try{
+        const resp=await fetch('{{ url_for("profile.upgrade") }}',{method:'POST',body:fd});
+        const data=await resp.json();
+        document.getElementById('upgradeProcessingState').style.display='none';
+        if(data.success){
+            document.getElementById('upgradeSuccessMsg').textContent=data.message;
+            document.getElementById('upgradeSuccessState').style.display='';
+            setTimeout(()=>{window.location.href=data.redirect;},2000);
+        } else {
+            document.getElementById('upgradeFailMsg').textContent=data.message;
+            document.getElementById('upgradeFailureState').style.display='';
+        }
+    }catch(err){
+        document.getElementById('upgradeProcessingState').style.display='none';
+        document.getElementById('upgradeFailMsg').textContent='Network error. Try again.';
+        document.getElementById('upgradeFailureState').style.display='';
+    }
+});
+
+// ── Demo Modal
+function openDemoModal() {
+    document.getElementById('demoSuccessState').style.display = 'none';
+    document.getElementById('demoFormState').style.display = '';
+    document.getElementById('demoOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDemoModal(evt, force) {
+    if (force || (evt && evt.target === document.getElementById('demoOverlay'))) {
+        document.getElementById('demoOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+document.getElementById('demoForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('demoSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+    try {
+        const resp = await fetch('{{ url_for("auth.book_demo") }}', {method: 'POST', body: new FormData(this)});
+        const data = await resp.json();
+        if(data.success) {
+            document.getElementById('demoFormState').style.display = 'none';
+            document.getElementById('demoSuccessMsg').textContent = data.message;
+            document.getElementById('demoSuccessState').style.display = '';
+        } else {
+            alert(data.message);
+        }
+    } catch(err) {
+        alert('Network error. Try again.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Request Demo';
+    }
+});
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape') {
+        closeUpgradeModal(null,true);
+        closeDemoModal(null,true);
+    }
+});
+</script>
+{% endblock %}

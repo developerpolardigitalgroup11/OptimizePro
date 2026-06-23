@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} — OptimizePro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    {% block head %}{% endblock %}
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+    <!-- ── Sidebar ── -->
+    <aside class="admin-sidebar">
+        <div class="admin-brand">
+            <div class="admin-brand-label">⚙️ Control Panel</div>
+            <div class="admin-brand-name">OptimizePro</div>
+            <div class="admin-brand-sub">Admin Dashboard</div>
+        </div>
+
+        <nav class="admin-nav">
+            <div class="admin-nav-section">Overview</div>
+            <a href="{{ url_for('admin.dashboard') }}"
+               class="admin-nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+                <span class="admin-nav-icon">📊</span> Dashboard
+            </a>
+
+            <div class="admin-nav-section">Management</div>
+            <a href="{{ url_for('admin.clients') }}"
+               class="admin-nav-link {% if request.endpoint == 'admin.clients' %}active{% endif %}">
+                <span class="admin-nav-icon">👥</span> Clients
+            </a>
+            <a href="{{ url_for('admin.demos') }}"
+               class="admin-nav-link {% if request.endpoint == 'admin.demos' %}active{% endif %}">
+                <span class="admin-nav-icon">📅</span> Demo Requests
+                {% if pending_demos_count is defined and pending_demos_count > 0 %}
+                <span class="admin-nav-badge">{{ pending_demos_count }}</span>
+                {% endif %}
+            </a>
+            <a href="{{ url_for('admin.subscriptions') }}"
+               class="admin-nav-link {% if request.endpoint == 'admin.subscriptions' %}active{% endif %}">
+                <span class="admin-nav-icon">💳</span> Subscriptions
+            </a>
+            <a href="{{ url_for('admin.products') }}"
+               class="admin-nav-link {% if request.endpoint == 'admin.products' %}active{% endif %}">
+                <span class="admin-nav-icon">📦</span> Products
+            </a>
+        </nav>
+
+        <div class="admin-sidebar-footer">
+            <div class="admin-user-pill">
+                <div class="admin-user-avatar">
+                    {{ admin_user.username[0]|upper if admin_user else 'A' }}
+                </div>
+                <div class="admin-user-info">
+                    <div class="admin-user-name">{{ admin_user.username if admin_user else 'Admin' }}</div>
+                    <div class="admin-user-role">Super Admin</div>
+                </div>
+                <a href="{{ url_for('admin.logout') }}" class="admin-logout-btn" title="Logout">⏻</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="admin-main">
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -20,6 +20,11 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
     app.config.setdefault('MAX_CONTENT_LENGTH', 2 * 1024 * 1024)  # 2 MB upload limit
+    
+    # Ensure upload directory exists
+    import os
+    upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+    os.makedirs(upload_dir, exist_ok=True)
 
     # Initialize extensions
     db.init_app(app)
@@ -35,6 +40,7 @@ def create_app(config_class=Config):
                     conn.execute(db.text("PRAGMA synchronous=NORMAL"))
                     conn.commit()
                 app._wal_enabled = True
+
 
     # Register blueprints
     from auth import auth_bp
@@ -67,6 +73,12 @@ def create_app(config_class=Config):
     from routes.export import export_bp
     app.register_blueprint(export_bp, url_prefix='/export')
 
+    from routes.profile import profile_bp
+    app.register_blueprint(profile_bp, url_prefix='/profile')
+
+    from routes.admin import admin_bp
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+
     # Create tables and seed defaults
     with app.app_context():
         db.create_all()
@@ -75,11 +87,29 @@ def create_app(config_class=Config):
     # Root redirect
     @app.route('/')
     def index():
+        from flask_login import current_user
+        if current_user.is_authenticated and current_user.is_admin:
+            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('dashboard.index'))
+
+    # Restrict admin from accessing client routes
+    @app.before_request
+    def restrict_admin_access():
+        from flask import request
+        from flask_login import current_user
+        if current_user.is_authenticated and current_user.is_admin:
+            # Allow static files, auth routes, admin routes, and the root index
+            if request.endpoint and request.endpoint.startswith('static'):
+                return
+            if request.blueprint not in ('admin', 'auth') and request.endpoint != 'index':
+                return redirect(url_for('admin.dashboard'))
 
     # Error handlers
     @app.errorhandler(404)
     def not_found(e):
+        from flask_login import current_user
+        if current_user.is_authenticated and current_user.is_admin:
+            return redirect(url_for('admin.dashboard'))
         return redirect(url_for('dashboard.index'))
 
     return app

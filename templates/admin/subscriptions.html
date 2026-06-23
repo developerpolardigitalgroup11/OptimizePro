@@ -1,0 +1,124 @@
+{% extends "admin/base.html" %}
+{% block title %}Subscriptions{% endblock %}
+
+{% block content %}
+<div class="admin-topbar">
+    <div>
+        <h1 class="admin-page-title">Subscriptions</h1>
+        <p class="admin-page-sub">All billing records and revenue overview</p>
+    </div>
+</div>
+
+<!-- Revenue Summary Cards -->
+<div class="admin-kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="admin-kpi admin-kpi--revenue">
+        <div class="admin-kpi-icon">💰</div>
+        <div class="admin-kpi-value">₹{{ '{:,.0f}'.format(total_revenue) }}</div>
+        <div class="admin-kpi-label">Total Revenue</div>
+    </div>
+    <div class="admin-kpi admin-kpi--pro">
+        <div class="admin-kpi-icon"></div>
+        <div class="admin-kpi-value">₹{{ '{:,.0f}'.format(pro_revenue) }}</div>
+        <div class="admin-kpi-label">Pro Revenue</div>
+    </div>
+    <div class="admin-kpi admin-kpi--users">
+        <div class="admin-kpi-icon"></div>
+        <div class="admin-kpi-value">₹{{ '{:,.0f}'.format(basic_revenue) }}</div>
+        <div class="admin-kpi-label">Basic Revenue</div>
+    </div>
+    <div class="admin-kpi admin-kpi--demos">
+        <div class="admin-kpi-icon">📆</div>
+        <div class="admin-kpi-value">₹{{ '{:,.0f}'.format(monthly_rev) }}</div>
+        <div class="admin-kpi-label">This Month</div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="GET" class="admin-filter-bar">
+    <select name="plan" class="admin-select" onchange="this.form.submit()">
+        <option value="">All Plans</option>
+        <option value="pro"   {% if plan_filter   == 'pro'   %}selected{% endif %}>Pro</option>
+        <option value="basic" {% if plan_filter   == 'basic' %}selected{% endif %}>Basic</option>
+    </select>
+    <select name="status" class="admin-select" onchange="this.form.submit()">
+        <option value="">All Statuses</option>
+        <option value="active"    {% if status_filter == 'active'    %}selected{% endif %}>Active</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+        <option value="expired"   {% if status_filter == 'expired'   %}selected{% endif %}>Expired</option>
+    </select>
+    {% if plan_filter or status_filter %}
+    <a href="{{ url_for('admin.subscriptions') }}" class="abtn abtn--ghost">✕ Clear</a>
+    {% endif %}
+</form>
+
+<!-- Subscriptions Table -->
+<div class="admin-card" style="padding:0;">
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr>
+                <th>Client</th>
+                <th>Plan</th>
+                <th>Amount</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Period</th>
+                <th>Transaction ID</th>
+            </tr></thead>
+            <tbody>
+            {% for s in subs %}
+            <tr>
+                <td>
+                    {% if s._user %}
+                    <div style="font-weight:600; color:white;">{{ s._user.username }}</div>
+                    <div style="font-size:0.72rem; color:var(--admin-text-muted);">{{ s._user.email }}</div>
+                    {% else %}
+                    <span style="color:var(--admin-text-muted);">User #{{ s.user_id }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="abadge abadge--{{ s.plan }}">
+                        {% if s.plan == 'pro' %}{% else %}{% endif %} {{ s.plan|title }}
+                    </span>
+                </td>
+                <td style="font-weight:600; color:white;">
+                    {% if s.amount == 0 %}
+                    <span style="color:var(--admin-teal);">Free</span>
+                    {% else %}
+                    ₹{{ '{:,.0f}'.format(s.amount) }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if s.payment_method == 'demo' %}
+                    <span class="abadge abadge--demo">Demo</span>
+                    {% elif s.payment_method == 'admin' %}
+                    <span class="abadge abadge--admin">Admin</span>
+                    {% else %}
+                    <span style="color:var(--admin-text-sub);">{{ s.payment_method or '—' }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="abadge abadge--{{ s.status }}">{{ s.status|title }}</span>
+                </td>
+                <td style="font-size:0.75rem; color:var(--admin-text-muted);">
+                    {% if s.billing_period_start %}
+                    {{ s.billing_period_start.strftime('%d %b') }} →
+                    {{ s.billing_period_end.strftime('%d %b %Y') if s.billing_period_end else '?' }}
+                    {% else %}—{% endif %}
+                </td>
+                <td style="font-family:monospace; font-size:0.7rem; color:var(--admin-text-muted);">
+                    {{ s.transaction_id[:20] ~ '…' if s.transaction_id and s.transaction_id|length > 20 else (s.transaction_id or '—') }}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7">
+                <div class="admin-empty">
+                    <div class="admin-empty-icon">💳</div>
+                    <p>No subscription records found</p>
+                </div>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

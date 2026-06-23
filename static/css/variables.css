@@ -1,0 +1,55 @@
+/* ============================================
+   OptimizePro Design System
+   Warm dark theme — friendly & professional
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+/* --- CSS Custom Properties --- */
+:root {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d28;
+    --bg-card: #21242f;
+    --bg-card-hover: #282c3a;
+    --bg-input: #181b24;
+    --border: #2d3248;
+    --border-light: #383d54;
+
+    --text-primary: #e8eaf0;
+    --text-secondary: #9ca3b8;
+    --text-muted: #6b7280;
+    --text-white: #ffffff;
+
+    --accent-primary: #6366f1;
+    --accent-primary-hover: #818cf8;
+    --accent-secondary: #14b8a6;
+    --gradient-main: linear-gradient(135deg, #6366f1, #14b8a6);
+    --gradient-soft: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(20, 184, 166, 0.08));
+
+    --color-success: #22c55e;
+    --color-warning: #f59e0b;
+    --color-danger: #ef4444;
+    --color-info: #3b82f6;
+
+    --color-amazon: #FF9900;
+    --color-flipkart: #2874F0;
+    --color-meesho: #570A57;
+
+    --priority-high: #ef4444;
+    --priority-medium: #f59e0b;
+    --priority-low: #eab308;
+    --priority-rebalance: #3b82f6;
+
+    --radius-sm: 6px;
+    --radius: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+
+    --sidebar-width: 250px;
+    --transition: 150ms ease;
+}

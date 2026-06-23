@@ -1,0 +1,321 @@
+/* ============================================
+   SIGNUP / AUTH REDESIGN
+   ============================================ */
+
+.auth-split-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.auth-brand-panel {
+    width: 420px;
+    flex-shrink: 0;
+    background: linear-gradient(145deg, #0d0f18 0%, #1a1d2e 50%, #141828 100%);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-brand-panel::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.auth-brand-panel::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    right: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(20, 184, 166, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.auth-brand-inner {
+    position: relative;
+    z-index: 1;
+}
+
+.auth-logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.auth-brand-name {
+    font-size: 1.6rem;
+    background: var(--gradient-main);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.auth-brand-headline {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--text-white);
+    margin-bottom: 1rem;
+}
+
+.auth-brand-sub {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 2rem;
+}
+
+.auth-feature-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.auth-feature-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+}
+
+.auth-feature-icon {
+    font-size: 1.1rem;
+}
+
+.auth-form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    background: var(--bg-primary);
+}
+
+.auth-form-inner {
+    width: 100%;
+    max-width: 440px;
+}
+
+.auth-form-title {
+    font-size: 1.6rem;
+    margin-bottom: 0.25rem;
+    color: var(--text-white);
+}
+
+.auth-form-sub {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 2rem;
+}
+
+.auth-footer-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Step indicator */
+.auth-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 2rem;
+}
+
+.auth-steps--center {
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.auth-step {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    opacity: 0.45;
+    transition: opacity 0.3s ease;
+}
+
+.auth-step.active {
+    opacity: 1;
+}
+
+.auth-step.completed {
+    opacity: 0.8;
+}
+
+.auth-step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.auth-step.active .auth-step-circle {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+}
+
+.auth-step.completed .auth-step-circle {
+    background: var(--color-success);
+    border-color: var(--color-success);
+    color: white;
+}
+
+.auth-step-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.auth-step.active .auth-step-label {
+    color: var(--text-primary);
+}
+
+.auth-step-line {
+    flex: 1;
+    height: 2px;
+    background: var(--border);
+    margin: 0 0.75rem;
+    min-width: 40px;
+    transition: background 0.3s ease;
+}
+
+.auth-step-line--done {
+    background: var(--color-success);
+}
+
+/* Input with icon */
+.input-with-icon {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.form-control-icon {
+    padding-left: 2.5rem;
+    padding-right: 2.75rem;
+}
+
+.input-toggle-pw {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    transition: color var(--transition);
+}
+
+.input-toggle-pw:hover,
+.input-toggle-pw.active {
+    color: var(--accent-primary);
+}
+
+.input-toggle-pw svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Password strength */
+.pw-strength {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.pw-strength-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.pw-strength-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    width: 0%;
+    transition: width 0.4s ease, background 0.4s ease;
+}
+
+.pw-strength-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.pw-match-hint {
+    font-size: 0.75rem;
+    margin-top: 0.4rem;
+    font-weight: 500;
+}
+
+.pw-match-hint.match-ok {
+    color: var(--color-success);
+}
+
+.pw-match-hint.match-fail {
+    color: var(--color-danger);
+}
+
+.btn-full {
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-lg {
+    padding: 0.85rem 1.5rem;
+    font-size: 0.95rem;
+}
+
+.btn-loader {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+    margin-left: 0.25rem;
+}
+

@@ -1,0 +1,272 @@
+{% extends "admin/base.html" %}
+{% block title %}Clients{% endblock %}
+
+{% block content %}
+<div class="admin-topbar">
+    <div>
+        <h1 class="admin-page-title">Client Management</h1>
+        <p class="admin-page-sub">{{ users|length }} client{{ 's' if users|length != 1 }} found</p>
+    </div>
+</div>
+
+<!-- Filter Bar -->
+<form method="GET" class="admin-filter-bar">
+    <input type="text" name="q" class="admin-search"
+           placeholder="🔍  Search by username, email, company…"
+           value="{{ search }}">
+    <select name="tier" class="admin-select" onchange="this.form.submit()">
+        <option value="">All Tiers</option>
+        <option value="pro"   {% if tier_filter == 'pro'   %}selected{% endif %}>Pro</option>
+        <option value="basic" {% if tier_filter == 'basic' %}selected{% endif %}>Basic</option>
+    </select>
+    <button type="submit" class="abtn abtn--ghost">Apply</button>
+    {% if search or tier_filter %}
+    <a href="{{ url_for('admin.clients') }}" class="abtn abtn--ghost">✕ Clear</a>
+    {% endif %}
+</form>
+
+<!-- Clients Table -->
+<div class="admin-card" style="padding:0;">
+    <div class="admin-table-wrap">
+        <table class="admin-table">
+            <thead><tr>
+                <th>Client</th>
+                <th>Tier</th>
+                <th>Expires</th>
+                <th>Products</th>
+                <th>Joined</th>
+                <th>Actions</th>
+            </tr></thead>
+            <tbody>
+            {% for u in users %}
+            <tr id="row-{{ u.id }}">
+                <!-- Client Info -->
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.6rem;">
+                        <div style="width:32px; height:32px; border-radius:50%; background:{{ u.avatar_color }}; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.8rem; color:white; flex-shrink:0;">
+                            {{ u.username[0]|upper }}
+                        </div>
+                        <div>
+                            <div style="font-weight:600; color:white;">{{ u.username }}</div>
+                            <div style="font-size:0.72rem; color:var(--admin-text-muted);">{{ u.email }}</div>
+                            {% if u.company %}<div style="font-size:0.7rem; color:var(--admin-text-muted);">{{ u.company }}</div>{% endif %}
+                        </div>
+                    </div>
+                </td>
+
+                <!-- Tier Badge -->
+                <td>
+                    <span class="abadge abadge--{{ u.tier }}" id="tier-badge-{{ u.id }}">
+                        {% if u.tier == 'pro' %}{% else %}{% endif %} {{ u.tier|title }}
+                    </span>
+                    {% if u._is_demo %}
+                    <span class="abadge abadge--demo" id="demo-badge-{{ u.id }}" style="margin-left:4px;">🎯 Demo</span>
+                    {% endif %}
+                </td>
+
+                <!-- Expiry -->
+                <td id="expiry-cell-{{ u.id }}">
+                    {% if u._days_left is not none %}
+                        {% if u._days_left == 0 %}
+                        <span style="color:#f87171; font-weight:600; font-size:0.78rem;">Expired</span>
+                        {% elif u._days_left <= 5 %}
+                        <span style="color:#fbbf24; font-weight:700; font-size:0.78rem;">⚠ {{ u._days_left }}d left</span>
+                        {% else %}
+                        <span style="color:#4ade80; font-weight:600; font-size:0.78rem;">{{ u._days_left }} days</span>
+                        {% endif %}
+                    {% else %}
+                    <span style="color:var(--admin-text-muted); font-size:0.78rem;">—</span>
+                    {% endif %}
+                </td>
+
+                <!-- Products -->
+                <td style="color:var(--admin-text-sub);">{{ u._product_count }}</td>
+
+                <!-- Joined -->
+                <td style="color:var(--admin-text-muted); white-space:nowrap;">
+                    {{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}
+                </td>
+
+                <!-- Actions -->
+                <td>
+                    <div style="display:flex; flex-direction:column; gap:0.4rem; align-items:flex-start;">
+
+                        <!-- Row 1: Tier Toggle + Days Input -->
+                        <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+                            <div class="tier-toggle" id="toggle-{{ u.id }}">
+                                <button class="tier-toggle-btn {% if u.tier == 'basic' %}active-basic{% endif %}"
+                                        onclick="changeTier({{ u.id }}, 'basic', this)">Basic</button>
+                                <button class="tier-toggle-btn {% if u.tier == 'pro' %}active-pro{% endif %}"
+                                        onclick="changeTier({{ u.id }}, 'pro', this)">Pro</button>
+                            </div>
+                            <!-- Days Input (shown only for Pro) -->
+                            <div id="days-wrap-{{ u.id }}" style="display:{% if u.tier == 'pro' %}flex{% else %}none{% endif %}; align-items:center; gap:4px;">
+                                <input type="number" id="days-input-{{ u.id }}"
+                                       class="admin-search" style="width:60px; padding:3px 6px; font-size:0.75rem;"
+                                       value="{{ u._days_left if u._days_left is not none else 30 }}"
+                                       min="1" max="365" title="Days for Pro access">
+                                <span style="font-size:0.72rem; color:var(--admin-text-muted);">days</span>
+                                <button class="abtn abtn--teal abtn--sm"
+                                        onclick="applyDays({{ u.id }}, this)">✓</button>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Cancel Demo + Delete -->
+                        <div style="display:flex; gap:0.4rem; align-items:center;">
+                            {% if u._is_demo %}
+                            <button class="abtn abtn--danger abtn--sm" id="cancel-demo-btn-{{ u.id }}"
+                                    onclick="cancelDemo({{ u.id }}, this)">⛔ Cancel Demo</button>
+                            {% endif %}
+                            <form method="POST" action="{{ url_for('admin.delete_client', user_id=u.id) }}"
+                                  onsubmit="return confirm('Delete user {{ u.username }}? This is irreversible.')">
+                                <button type="submit" class="abtn abtn--danger abtn--sm">🗑</button>
+                            </form>
+                        </div>
+
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6">
+                <div class="admin-empty"><div class="admin-empty-icon">👤</div><p>No clients found</p></div>
+            </td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Change Tier (toggle Basic / Pro)
+async function changeTier(userId, newTier, btn) {
+    const allBtns = btn.parentElement.querySelectorAll('.tier-toggle-btn');
+    allBtns.forEach(b => b.disabled = true);
+
+    const daysInput = document.getElementById(`days-input-${userId}`);
+    const days = daysInput ? parseInt(daysInput.value) || 30 : 30;
+
+    const fd = new FormData();
+    fd.append('tier', newTier);
+    fd.append('days', newTier === 'pro' ? days : 0);
+
+    const r = await fetch(`/admin/clients/${userId}/tier`, {method:'POST', body:fd});
+    const d = await r.json();
+
+    if (d.success) {
+        allBtns.forEach(b => {
+            b.disabled = false;
+            b.classList.remove('active-pro', 'active-basic');
+        });
+        btn.classList.add(newTier === 'pro' ? 'active-pro' : 'active-basic');
+
+        // Update tier badge
+        const badge = document.getElementById(`tier-badge-${userId}`);
+        badge.className = `abadge abadge--${newTier}`;
+        badge.textContent = (newTier === 'pro' ? '' : '') + newTier.charAt(0).toUpperCase() + newTier.slice(1);
+
+        // Show/hide days input
+        const daysWrap = document.getElementById(`days-wrap-${userId}`);
+        daysWrap.style.display = newTier === 'pro' ? 'flex' : 'none';
+
+        // Update expiry cell
+        updateExpiryCell(userId, newTier, d.days, d.expires_at);
+
+        // Flash row
+        const row = document.getElementById(`row-${userId}`);
+        row.style.background = 'rgba(99,102,241,0.08)';
+        setTimeout(() => row.style.background = '', 1500);
+    } else {
+        alert(d.message);
+        allBtns.forEach(b => b.disabled = false);
+    }
+}
+
+// ── Apply custom days to existing Pro user
+async function applyDays(userId, btn) {
+    const daysInput = document.getElementById(`days-input-${userId}`);
+    const days = parseInt(daysInput.value) || 30;
+    if (days < 1 || days > 365) { alert('Days must be between 1 and 365.'); return; }
+
+    btn.disabled = true; btn.textContent = '…';
+
+    const fd = new FormData();
+    fd.append('tier', 'pro');
+    fd.append('days', days);
+
+    const r = await fetch(`/admin/clients/${userId}/tier`, {method:'POST', body:fd});
+    const d = await r.json();
+
+    if (d.success) {
+        updateExpiryCell(userId, 'pro', d.days, d.expires_at);
+        btn.textContent = '✓';
+        setTimeout(() => btn.textContent = '✓', 1500);
+
+        const row = document.getElementById(`row-${userId}`);
+        row.style.background = 'rgba(20,184,166,0.07)';
+        setTimeout(() => row.style.background = '', 1500);
+    } else {
+        alert(d.message);
+    }
+    btn.disabled = false;
+}
+
+// ── Update expiry cell
+function updateExpiryCell(userId, tier, days, expiresAt) {
+    const cell = document.getElementById(`expiry-cell-${userId}`);
+    if (!cell) return;
+    if (tier === 'basic' || !days) {
+        cell.innerHTML = '<span style="color:var(--admin-text-muted); font-size:0.78rem;">—</span>';
+    } else if (days <= 5) {
+        cell.innerHTML = `<span style="color:#fbbf24; font-weight:700; font-size:0.78rem;">⚠ ${days}d left</span>`;
+    } else {
+        cell.innerHTML = `<span style="color:#4ade80; font-weight:600; font-size:0.78rem;">${days} days</span>`;
+    }
+}
+
+// ── Cancel Demo account
+async function cancelDemo(userId, btn) {
+    if (!confirm('Cancel this demo account? The user will be downgraded to Basic tier.')) return;
+    btn.disabled = true;
+    btn.textContent = 'Cancelling…';
+
+    const r = await fetch(`/admin/clients/${userId}/cancel-demo`, {method:'POST'});
+    const d = await r.json();
+
+    if (d.success) {
+        // Remove demo badge
+        const demoBadge = document.getElementById(`demo-badge-${userId}`);
+        if (demoBadge) demoBadge.remove();
+
+        // Update tier badge to Basic
+        const tierBadge = document.getElementById(`tier-badge-${userId}`);
+        tierBadge.className = 'abadge abadge--basic';
+        tierBadge.textContent = 'Basic';
+
+        // Update tier toggle
+        const toggle = document.getElementById(`toggle-${userId}`);
+        toggle.querySelectorAll('.tier-toggle-btn').forEach(b => b.classList.remove('active-pro', 'active-basic'));
+        toggle.querySelector('.tier-toggle-btn:first-child').classList.add('active-basic');
+
+        // Hide days input
+        const daysWrap = document.getElementById(`days-wrap-${userId}`);
+        if (daysWrap) daysWrap.style.display = 'none';
+
+        // Clear expiry
+        updateExpiryCell(userId, 'basic', 0, null);
+
+        // Remove this button
+        btn.remove();
+
+        const row = document.getElementById(`row-${userId}`);
+        row.style.background = 'rgba(239,68,68,0.08)';
+        setTimeout(() => row.style.background = '', 1800);
+    } else {
+        alert(d.message || 'Failed to cancel demo.');
+        btn.disabled = false;
+        btn.textContent = '⛔ Cancel Demo';
+    }
+}
+</script>
+{% endblock %}

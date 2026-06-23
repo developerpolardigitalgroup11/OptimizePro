@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login — OptimizePro</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body class="admin-body">
+
+<div class="admin-login-wrap">
+    <div class="admin-login-box">
+        <div class="admin-login-logo">
+            <div class="admin-login-logo-badge">
+                <span>🛡️ Admin Access</span>
+            </div>
+            <h1 class="admin-login-title">Control Panel</h1>
+            <p class="admin-login-sub">Sign in with your admin credentials</p>
+        </div>
+
+        {% if error %}
+        <div class="admin-error-msg">⚠️ {{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('admin.login') }}">
+            <div class="admin-form-group">
+                <label class="admin-form-label">Username or Email</label>
+                <input type="text" name="login_id" class="admin-form-input"
+                       placeholder="admin@example.com" required autofocus>
+            </div>
+            <div class="admin-form-group">
+                <label class="admin-form-label">Password</label>
+                <input type="password" name="password" class="admin-form-input"
+                       placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="admin-login-btn">Sign In to Admin Panel →</button>
+        </form>
+
+        <p style="text-align:center; margin-top:1.5rem; font-size:0.75rem; color:var(--admin-text-muted);">
+            🔒 Restricted access — authorised personnel only
+        </p>
+    </div>
+</div>
+
+</body>
+</html>

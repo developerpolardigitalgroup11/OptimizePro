@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+{% block title %}Choose Your Plan — OptimizePro{% endblock %}
+{% block auth_content %}
+<div class="tier-page">
+    <!-- Header -->
+    <div class="tier-header">
+        <!-- Step Indicator -->
+        <div class="auth-steps auth-steps--center">
+            <div class="auth-step completed">
+                <div class="auth-step-circle">✓</div>
+                <div class="auth-step-label">Your Info</div>
+            </div>
+            <div class="auth-step-line auth-step-line--done"></div>
+            <div class="auth-step active">
+                <div class="auth-step-circle">2</div>
+                <div class="auth-step-label">Choose Plan</div>
+            </div>
+        </div>
+        <h1 class="tier-page-title">Choose your plan</h1>
+        <p class="tier-page-sub">Start free, upgrade anytime. No credit card required for Free.</p>
+    </div>
+
+    <!-- Tier Cards -->
+    <div class="tier-grid">
+
+        <!-- BASIC -->
+        <div class="tier-card tier-card--basic" data-tier="basic">
+            <div class="tier-card-header">
+                <div class="tier-icon"></div>
+                <div class="tier-badge tier-basic">Basic</div>
+            </div>
+            <div class="tier-desc">Perfect for getting started and exploring the platform.</div>
+            <ul class="tier-features">
+                {% for f in tiers.basic.features %}
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{{ f }}</li>
+                {% endfor %}
+                {% for f in tiers.basic.unavailable %}
+                <li class="tier-feature tier-feature--na"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-cross"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>{{ f }}</li>
+                {% endfor %}
+            </ul>
+            <button class="btn btn-tier btn-tier--basic" onclick="openUpgradeContactModal()">Contact Team</button>
+        </div>
+
+        <!-- PRO -->
+        <div class="tier-card tier-card--pro popular" data-tier="pro">
+            <div class="popular-ribbon">Most Popular</div>
+            <div class="tier-card-header">
+                <div class="tier-icon"></div>
+                <div class="tier-badge tier-pro">Pro</div>
+            </div>
+
+            <div class="tier-desc">For serious sellers who want advanced insights and unlimited scale.</div>
+            <ul class="tier-features">
+                {% for f in tiers.pro.features %}
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>{{ f }}</li>
+                {% endfor %}
+                {% for f in tiers.pro.unavailable %}
+                <li class="tier-feature tier-feature--na"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-cross"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>{{ f }}</li>
+                {% endfor %}
+            </ul>
+            <button class="btn btn-tier btn-tier--pro" onclick="openUpgradeContactModal()" style="margin-top: 1rem;">Contact Team to Get Pro</button>
+        </div>
+
+        <!-- BOOK A DEMO -->
+        <div class="tier-card tier-card--demo" data-tier="demo">
+            <div class="tier-card-header">
+                <div class="tier-icon">📅</div>
+                <div class="tier-badge" style="background: rgba(20,184,166,0.15); color: #14b8a6;">Book a Demo</div>
+            </div>
+            <div class="tier-price">
+                <span class="tier-price-amount" style="font-size: 1.6rem;">Free</span>
+                <span class="tier-price-period">30-min walkthrough</span>
+            </div>
+            <div class="tier-desc">See OptimizePro in action before you commit. Our team will guide you through every Pro feature.</div>
+            <ul class="tier-features">
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>ML Forecasting live demo</li>
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Smart Allocation walkthrough</li>
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Advanced Analytics preview</li>
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Q&amp;A with our team</li>
+                <li class="tier-feature"><svg viewBox="0 0 20 20" fill="currentColor" class="feat-check"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>No credit card needed</li>
+            </ul>
+            <button class="btn btn-tier btn-tier--demo" onclick="openDemoModal()">Book a Demo — Free</button>
+        </div>
+
+    </div>
+
+    <p class="tier-footnote">🔒 Secure payment &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; 7-day money-back guarantee</p>
+    <p class="tier-back"><a href="{{ url_for('auth.register') }}">&larr; Back to registration</a></p>
+</div>
+
+<!-- ─── Payment Modal ─── -->
+<div class="modal-overlay" id="paymentOverlay" onclick="closePaymentModal(event)">
+    <div class="payment-modal" id="paymentModal">
+        <!-- Header -->
+        <div class="payment-modal-header">
+            <div>
+                <div class="payment-modal-title">Complete Payment</div>
+                <div class="payment-modal-subtitle" id="modalPlanLabel">Pro — ₹999/month</div>
+            </div>
+            <button class="payment-close-btn" onclick="closePaymentModal(null, true)">✕</button>
+        </div>
+
+        <!-- Form State -->
+        <div id="paymentFormState">
+            <div class="payment-secure-badge">🔒 256-bit SSL encrypted payment</div>
+
+            <form id="paymentForm">
+                <input type="hidden" id="selectedTier" name="tier" value="">
+
+                <div class="form-group">
+                    <label>Cardholder Name</label>
+                    <input type="text" id="cardName" name="card_name" class="form-control" placeholder="Name on card" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Card Number</label>
+                    <div class="card-input-wrap">
+                        <input type="text" id="cardNumber" name="card_number" class="form-control card-number-input"
+                               placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        <div class="card-brand-icons">
+                            <svg viewBox="0 0 38 24" class="card-icon"><rect width="38" height="24" rx="4" fill="#1a1d28"/><path d="M14 8h10v8H14z" fill="#FF5F00"/><circle cx="14" cy="12" r="5" fill="#EB001B"/><circle cx="24" cy="12" r="5" fill="#F79E1B"/></svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="payment-row">
+                    <div class="form-group">
+                        <label>Expiry Date</label>
+                        <input type="text" id="cardExpiry" name="card_expiry" class="form-control" placeholder="MM / YY" maxlength="7" required>
+                    </div>
+                    <div class="form-group">
+                        <label>CVV</label>
+                        <input type="password" id="cardCvv" name="card_cvv" class="form-control" placeholder="•••" maxlength="4" required>
+                    </div>
+                </div>
+
+                <div class="payment-total-row">
+                    <span>Total charged today</span>
+                    <strong id="modalTotalAmount">₹999</strong>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg payment-submit-btn" id="payBtn">
+                    <span id="payBtnText">Pay Now</span>
+                    <div class="btn-loader" id="payLoader" style="display:none;"></div>
+                </button>
+            </form>
+
+            <div class="payment-footnote">
+                By subscribing you agree to our <a href="#">Terms of Service</a>.
+                Use card ending <strong>0000</strong> to simulate a declined payment.
+            </div>
+        </div>
+
+        <!-- Processing State -->
+        <div id="paymentProcessingState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-spinner"></div>
+                <div class="payment-status-title">Processing Payment…</div>
+                <div class="payment-status-sub">Please do not close this window.</div>
+            </div>
+        </div>
+
+        <!-- Success State -->
+        <div id="paymentSuccessState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-success-icon">✓</div>
+                <div class="payment-status-title">Payment Successful!</div>
+                <div class="payment-status-sub" id="successMsg">Welcome to OptimizePro Pro!</div>
+                <div class="payment-status-sub" style="margin-top:0.5rem; color:var(--text-muted);">Redirecting to your dashboard…</div>
+            </div>
+        </div>
+
+        <!-- Failure State -->
+        <div id="paymentFailureState" style="display:none;">
+            <div class="payment-status-anim">
+                <div class="payment-fail-icon">✕</div>
+                <div class="payment-status-title">Payment Declined</div>
+                <div class="payment-status-sub" id="failMsg">Your card was declined.</div>
+                <button class="btn btn-secondary" onclick="resetPaymentModal()" style="margin-top:1.5rem;">Try Again</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Book Demo Modal ─── -->
+<div class="modal-overlay" id="demoOverlay" onclick="closeDemoModal(event)">
+    <div class="payment-modal" id="demoModal">
+        <div class="payment-modal-header">
+            <div>
+                <div class="payment-modal-title">Book a Demo</div>
+                <div class="payment-modal-subtitle">Your account will be created &amp; our team will reach out within 24 hours.</div>
+            </div>
+            <button class="payment-close-btn" onclick="closeDemoModal(null, true)">✕</button>
+        </div>
+
+        <div id="demoFormState">
+            <div class="payment-secure-badge" style="background:rgba(20,184,166,0.08); border-color:rgba(20,184,166,0.2); color:#14b8a6;">
+                ✅ A free Basic account will be created for you automatically
+            </div>
+            <form id="demoForm" style="margin-top:1rem;">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="name" id="demo_name" class="form-control"
+                           value="{{ pending.username if pending else '' }}"
+                           placeholder="Your name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email Address</label>
+                    <input type="email" name="email" id="demo_email" class="form-control"
+                           value="{{ pending.email if pending else '' }}"
+                           placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                    <input type="tel" name="phone" class="form-control" placeholder="For a quick callback">
+                </div>
+                <div class="form-group">
+                    <label>Company / Brand <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+                    <input type="text" name="company" class="form-control" placeholder="Your business name">
+                </div>
+                <div class="form-group">
+                    <label>What would you like to see?</label>
+                    <textarea name="message" class="form-control" rows="3" placeholder="E.g. I want to see ML forecasting in action…"></textarea>
+                </div>
+                <button type="submit" class="btn btn-tier btn-tier--demo btn-full btn-lg" id="demoSubmitBtn">Book Demo &amp; Create Account</button>
+            </form>
+        </div>
+
+        <div id="demoSuccessState" style="display:none; padding:2rem 0; text-align:center;">
+            <div class="payment-success-icon" style="margin:0 auto 1rem;">✓</div>
+            <div class="payment-status-title">You're all set!</div>
+            <div class="payment-status-sub" id="demoSuccessMsg"></div>
+            <div class="payment-status-sub" style="margin-top:0.5rem; color:var(--text-muted);">Redirecting to your dashboard…</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── Modal open/close
+function openPaymentModal(tier, priceLabel, amount) {
+    document.getElementById('selectedTier').value = tier;
+    document.getElementById('modalPlanLabel').textContent =
+        tier.charAt(0).toUpperCase() + tier.slice(1) + ' — ' + priceLabel + '/month';
+    document.getElementById('modalTotalAmount').textContent = priceLabel;
+    resetPaymentModal();
+    document.getElementById('paymentOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePaymentModal(evt, force) {
+    if (force || (evt && evt.target === document.getElementById('paymentOverlay'))) {
+        document.getElementById('paymentOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+function resetPaymentModal() {
+    ['paymentProcessingState','paymentSuccessState','paymentFailureState'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    document.getElementById('paymentFormState').style.display = '';
+    const btn = document.getElementById('payBtn');
+    btn.disabled = false;
+    document.getElementById('payBtnText').style.display = '';
+    document.getElementById('payLoader').style.display = 'none';
+}
+
+// ── Card number formatting
+document.getElementById('cardNumber').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '').substring(0, 16);
+    this.value = v.match(/.{1,4}/g)?.join(' ') || v;
+});
+
+// ── Expiry formatting
+document.getElementById('cardExpiry').addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '').substring(0, 4);
+    if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+    this.value = v;
+});
+
+// ── Form submit
+document.getElementById('paymentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    // Basic validation
+    const name = document.getElementById('cardName').value.trim();
+    const num = document.getElementById('cardNumber').value.replace(/\s/g,'');
+    const exp = document.getElementById('cardExpiry').value.trim();
+    const cvv = document.getElementById('cardCvv').value.trim();
+    if (!name || num.length < 13 || !exp || cvv.length < 3) {
+        alert('Please fill all card details correctly.');
+        return;
+    }
+
+    // Show processing
+    document.getElementById('paymentFormState').style.display = 'none';
+    document.getElementById('paymentProcessingState').style.display = '';
+
+    const formData = new FormData(this);
+    formData.set('card_number', num);
+
+    // Artificial delay for realism
+    await new Promise(r => setTimeout(r, 2000));
+
+    try {
+        const resp = await fetch('{{ url_for("auth.process_payment") }}', {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await resp.json();
+        document.getElementById('paymentProcessingState').style.display = 'none';
+
+        if (data.success) {
+            document.getElementById('successMsg').textContent = data.message;
+            document.getElementById('paymentSuccessState').style.display = '';
+            setTimeout(() => { window.location.href = data.redirect; }, 2500);
+        } else {
+            document.getElementById('failMsg').textContent = data.message;
+            document.getElementById('paymentFailureState').style.display = '';
+        }
+    } catch(err) {
+        document.getElementById('paymentProcessingState').style.display = 'none';
+        document.getElementById('failMsg').textContent = 'Network error. Please try again.';
+        document.getElementById('paymentFailureState').style.display = '';
+    }
+});
+
+// ESC to close
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closePaymentModal(null, true);
+        closeDemoModal(null, true);
+    }
+});
+
+// ── Demo Modal
+function openDemoModal() {
+    document.getElementById('demoSuccessState').style.display = 'none';
+    document.getElementById('demoFormState').style.display = '';
+    document.getElementById('demoOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDemoModal(evt, force) {
+    if (force || (evt && evt.target === document.getElementById('demoOverlay'))) {
+        document.getElementById('demoOverlay').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+document.getElementById('demoForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('demoSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+    try {
+        const resp = await fetch('{{ url_for("auth.book_demo") }}', {method: 'POST', body: new FormData(this)});
+        const data = await resp.json();
+        if (data.success) {
+            document.getElementById('demoFormState').style.display = 'none';
+            document.getElementById('demoSuccessMsg').textContent = data.message;
+            document.getElementById('demoSuccessState').style.display = '';
+            // If backend created an account, redirect to dashboard
+            if (data.redirect) {
+                setTimeout(() => { window.location.href = data.redirect; }, 2500);
+            }
+        } else {
+            alert(data.message || 'Something went wrong.');
+            btn.disabled = false;
+            btn.textContent = 'Book Demo & Create Account';
+        }
+    } catch(err) {
+        alert('Network error. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Book Demo & Create Account';
+    }
+});
+</script>
+{% endblock %}

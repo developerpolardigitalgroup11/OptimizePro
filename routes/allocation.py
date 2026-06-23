@@ -3,6 +3,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_required, current_user
 from models import Product, Marketplace, AllocationPlan
+from auth import pro_required
 from services.allocation_service import generate_allocation, apply_allocation, get_allocation_history
 
 allocation_bp = Blueprint('allocation', __name__)
@@ -10,6 +11,7 @@ allocation_bp = Blueprint('allocation', __name__)
 
 @allocation_bp.route('/')
 @login_required
+@pro_required
 def planner():
     products = Product.query.filter_by(user_id=current_user.id, is_active=True).order_by(Product.name).all()
     marketplaces = Marketplace.query.filter_by(user_id=current_user.id, is_active=True).all()
@@ -18,6 +20,7 @@ def planner():
 
 @allocation_bp.route('/generate', methods=['POST'])
 @login_required
+@pro_required
 def generate():
     product_id = request.form.get('product_id', type=int)
     total_units = request.form.get('total_units', type=int)
@@ -54,6 +57,7 @@ def generate():
 
 @allocation_bp.route('/<int:plan_id>/apply', methods=['POST'])
 @login_required
+@pro_required
 def apply(plan_id):
     try:
         plan = apply_allocation(plan_id)
@@ -65,6 +69,7 @@ def apply(plan_id):
 
 @allocation_bp.route('/history')
 @login_required
+@pro_required
 def history():
     plans = get_allocation_history(current_user.id)
     return render_template('allocation/history.html', plans=plans)

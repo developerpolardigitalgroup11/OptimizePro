@@ -1,36 +1,236 @@
 {% extends "base.html" %}
-{% block title %}Register — OptimizePro{% endblock %}
+{% block title %}Create Account — OptimizePro{% endblock %}
 {% block auth_content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <h1>OptimizePro</h1>
-        <p class="subtitle">Create your account to start managing inventory</p>
-        <form method="POST">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control"
-                       value="{{ username|default('') }}" placeholder="Choose a username" required autofocus minlength="3">
+<div class="auth-split-layout">
+    <!-- Left Panel — Branding -->
+    <div class="auth-brand-panel">
+        <div class="auth-brand-inner">
+            <div class="auth-logo-wrap">
+                {% include 'icons/logo_main.svg' %}
+                <h1 class="auth-brand-name">OptimizePro</h1>
             </div>
-            <div class="form-group">
-                <label for="email">Email</label>
-                <input type="email" id="email" name="email" class="form-control"
-                       value="{{ email|default('') }}" placeholder="your@email.com" required>
+            <h2 class="auth-brand-headline">Smarter inventory.<br>Bigger margins.</h2>
+            <p class="auth-brand-sub">Join thousands of sellers who optimise stock across marketplaces — powered by ML forecasting.</p>
+            <div class="auth-feature-list">
+                <div class="auth-feature-item">Multi-marketplace inventory sync</div>
+                <div class="auth-feature-item">ML-powered demand forecasting</div>
+                <div class="auth-feature-item">Smart low-stock alerts</div>
+                <div class="auth-feature-item">Profit & analytics dashboard</div>
             </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control"
-                       placeholder="At least 6 characters" required minlength="6">
+        </div>
+    </div>
+
+    <!-- Right Panel — Form -->
+    <div class="auth-form-panel">
+        <div class="auth-form-inner">
+            <!-- Step Indicator -->
+            <div class="auth-steps">
+                <div class="auth-step active">
+                    <div class="auth-step-circle">1</div>
+                    <div class="auth-step-label">Your Info</div>
+                </div>
+                <div class="auth-step-line"></div>
+                <div class="auth-step">
+                    <div class="auth-step-circle">2</div>
+                    <div class="auth-step-label">Choose Plan</div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" class="form-control"
-                       placeholder="Repeat your password" required>
+
+            <h2 class="auth-form-title">Create your account</h2>
+            <p class="auth-form-sub">Step 1 of 2 — Enter your details</p>
+
+            <form method="POST" id="registerForm" novalidate>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M10 10a4 4 0 100-8 4 4 0 000 8zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"/></svg>
+                        <input type="text" id="username" name="username" class="form-control form-control-icon"
+                               value="{{ username|default('') }}" placeholder="Choose a username" required autofocus minlength="3">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/></svg>
+                        <input type="email" id="email" name="email" class="form-control form-control-icon"
+                               value="{{ email|default('') }}" placeholder="your@email.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                        <input type="password" id="password" name="password" class="form-control form-control-icon"
+                               placeholder="At least 6 characters" required minlength="6">
+                        <button type="button" class="input-toggle-pw" onclick="togglePw('password', this)" tabindex="-1">
+                            <svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>
+                        </button>
+                    </div>
+                    <div class="pw-strength" id="pwStrength" style="display:none;">
+                        <div class="pw-strength-bar"><div class="pw-strength-fill" id="pwStrengthFill"></div></div>
+                        <span class="pw-strength-label" id="pwStrengthLabel"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="input-with-icon">
+                        <svg class="input-icon" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control form-control-icon"
+                               placeholder="Repeat your password" required>
+                    </div>
+                    <div class="pw-match-hint" id="pwMatch"></div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full btn-lg" id="registerBtn">
+                    <span>Continue to Plan Selection</span>
+                    <svg viewBox="0 0 20 20" fill="currentColor" style="width:18px;height:18px;"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                </button>
+            </form>
+
+            <div class="auth-footer-links">
+                Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
             </div>
-            <button type="submit" class="btn btn-primary">Create Account</button>
-        </form>
-        <div class="auth-footer">
-            Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a>
         </div>
     </div>
 </div>
+
+<!-- Book Demo Modal -->
+<div id="demoModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
+    <div class="modal-content card" style="width: 100%; max-width: 500px; padding: 2rem;">
+        <h3 style="margin-top:0;">Book a Demo</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Enter your details and our team will get back to you within 24 hours.</p>
+        
+        <form id="demoForm" onsubmit="submitDemo(event)">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="demo_name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="demo_email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="demo_phone" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>Company</label>
+                <input type="text" id="demo_company" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>How can we help?</label>
+                <textarea id="demo_message" class="form-control" rows="3"></textarea>
+            </div>
+            <div id="demoAlert" style="display:none; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;"></div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('demoModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="demoSubmitBtn">Request Demo</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function togglePw(id, btn) {
+    const inp = document.getElementById(id);
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    btn.classList.toggle('active');
+}
+
+const pwInput = document.getElementById('password');
+const confirmInput = document.getElementById('confirm_password');
+const strengthBar = document.getElementById('pwStrength');
+const strengthFill = document.getElementById('pwStrengthFill');
+const strengthLabel = document.getElementById('pwStrengthLabel');
+const matchHint = document.getElementById('pwMatch');
+
+function calcStrength(pw) {
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    return score;
+}
+
+pwInput.addEventListener('input', () => {
+    const pw = pwInput.value;
+    if (!pw) { strengthBar.style.display = 'none'; return; }
+    strengthBar.style.display = 'flex';
+    const s = calcStrength(pw);
+    const levels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const colors = ['', '#ef4444', '#f59e0b', '#eab308', '#22c55e', '#14b8a6'];
+    const pct = Math.min(100, s * 20) + '%';
+    strengthFill.style.width = pct;
+    strengthFill.style.background = colors[s] || '#ef4444';
+    strengthLabel.textContent = levels[s] || 'Weak';
+    strengthLabel.style.color = colors[s] || '#ef4444';
+    checkMatch();
+});
+
+confirmInput.addEventListener('input', checkMatch);
+
+function checkMatch() {
+    const pw = pwInput.value;
+    const conf = confirmInput.value;
+    if (!conf) { matchHint.textContent = ''; return; }
+    if (pw === conf) {
+        matchHint.textContent = '✓ Passwords match';
+        matchHint.className = 'pw-match-hint match-ok';
+    } else {
+        matchHint.textContent = '✗ Passwords do not match';
+        matchHint.className = 'pw-match-hint match-fail';
+    }
+}
+
+async function submitDemo(e) {
+    e.preventDefault();
+    const btn = document.getElementById('demoSubmitBtn');
+    const alertBox = document.getElementById('demoAlert');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    
+    const formData = new FormData();
+    formData.append('name', document.getElementById('demo_name').value);
+    formData.append('email', document.getElementById('demo_email').value);
+    formData.append('phone', document.getElementById('demo_phone').value);
+    formData.append('company', document.getElementById('demo_company').value);
+    formData.append('message', document.getElementById('demo_message').value);
+
+    try {
+        const res = await fetch("{{ url_for('auth.book_demo') }}", {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        
+        alertBox.style.display = 'block';
+        if (data.success) {
+            alertBox.style.background = 'rgba(34, 197, 94, 0.1)';
+            alertBox.style.color = '#22c55e';
+            alertBox.textContent = data.message;
+            document.getElementById('demoForm').reset();
+            setTimeout(() => {
+                document.getElementById('demoModal').style.display = 'none';
+                alertBox.style.display = 'none';
+            }, 3000);
+        } else {
+            alertBox.style.background = 'rgba(239, 68, 68, 0.1)';
+            alertBox.style.color = '#ef4444';
+            alertBox.textContent = data.message || 'Something went wrong.';
+        }
+    } catch (err) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = 'rgba(239, 68, 68, 0.1)';
+        alertBox.style.color = '#ef4444';
+        alertBox.textContent = 'Connection error. Please try again.';
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Request Demo';
+    }
+}
+</script>
 {% endblock %}

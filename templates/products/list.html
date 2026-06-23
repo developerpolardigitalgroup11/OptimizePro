@@ -24,6 +24,7 @@
                     <th><span class="mp-badge"><span class="mp-dot" style="background: {{ mp.color }};"></span>{{ mp.name }}</span></th>
                     {% endfor %}
                     <th>Unallocated</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -47,6 +48,66 @@
                     {% endfor %}
                     <td style="color: {% if product.unallocated_qty > 0 %}var(--color-warning){% else %}var(--text-muted){% endif %};">
                         {{ product.unallocated_qty }}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.25rem;">
+                            <!-- Edit Button triggers modal -->
+                            <button type="button" class="btn btn-icon" title="Edit" style="color: var(--text-muted);" onclick="document.getElementById('editModal-{{ product.id }}').style.display='flex'">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 18px; height: 18px;">
+                                    <path d="M2.695 14.763l-1.262 3.152a.5.5 0 00.65.65l3.151-1.262a4 4 0 001.343-.885L17.5 5.5a2.121 2.121 0 00-3-3L3.58 13.42a4 4 0 00-.885 1.343z" />
+                                </svg>
+                            </button>
+                            
+                            <!-- Delete Form -->
+                            <form method="POST" action="{{ url_for('products.delete_product', product_id=product.id) }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to delete this product?');">
+                                <button type="submit" class="btn btn-icon" title="Delete" style="color: var(--priority-high);">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width: 18px; height: 18px;">
+                                        <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Edit Modal -->
+                        <div id="editModal-{{ product.id }}" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:1000;">
+                            <div class="modal-content card" style="width: 100%; max-width: 500px; padding: 2rem;">
+                                <h3 style="margin-top:0;">Edit Product: {{ product.sku }}</h3>
+                                <form method="POST" action="{{ url_for('products.edit_product', product_id=product.id) }}">
+                                    <div class="form-group">
+                                        <label>Name</label>
+                                        <input type="text" name="name" class="form-control" value="{{ product.name }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Category</label>
+                                        <select name="category" class="form-control" required>
+                                            <option value="General" {% if product.category == 'General' %}selected{% endif %}>General / Other</option>
+                                            <option value="Electronics" {% if product.category == 'Electronics' %}selected{% endif %}>Electronics</option>
+                                            <option value="Fashion & Apparel" {% if product.category == 'Fashion & Apparel' %}selected{% endif %}>Fashion & Apparel</option>
+                                            <option value="Home & Kitchen" {% if product.category == 'Home & Kitchen' %}selected{% endif %}>Home & Kitchen</option>
+                                            <option value="Beauty & Personal Care" {% if product.category == 'Beauty & Personal Care' %}selected{% endif %}>Beauty & Personal Care</option>
+                                            <option value="Sports & Outdoors" {% if product.category == 'Sports & Outdoors' %}selected{% endif %}>Sports & Outdoors</option>
+                                            <option value="Books & Media" {% if product.category == 'Books & Media' %}selected{% endif %}>Books & Media</option>
+                                            <option value="Toys & Games" {% if product.category == 'Toys & Games' %}selected{% endif %}>Toys & Games</option>
+                                            <option value="Health & Household" {% if product.category == 'Health & Household' %}selected{% endif %}>Health & Household</option>
+                                            <option value="Groceries & Food" {% if product.category == 'Groceries & Food' %}selected{% endif %}>Groceries & Food</option>
+                                            <option value="Office Supplies" {% if product.category == 'Office Supplies' %}selected{% endif %}>Office Supplies</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cost Price (₹)</label>
+                                        <input type="number" step="0.01" name="cost_price" class="form-control" value="{{ product.cost_price }}" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Total Warehouse Qty</label>
+                                        <input type="number" name="quantity" class="form-control" value="{{ product.total_warehouse_qty }}" required>
+                                    </div>
+                                    <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+                                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('editModal-{{ product.id }}').style.display='none'">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

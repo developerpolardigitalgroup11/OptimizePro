@@ -1,0 +1,228 @@
+{% extends "admin/base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="admin-topbar">
+    <div>
+        <h1 class="admin-page-title">Dashboard</h1>
+        <p class="admin-page-sub">Master overview — all client activity at a glance</p>
+    </div>
+    <div class="admin-topbar-right">
+        <span style="font-size:0.78rem; color:var(--admin-text-muted);" id="liveClock"></span>
+        <a href="{{ url_for('admin.clients') }}" class="abtn abtn--primary">👥 Manage Clients</a>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="admin-kpi-grid">
+    <div class="admin-kpi admin-kpi--users">
+        <div class="admin-kpi-icon">👥</div>
+        <div class="admin-kpi-value">{{ total_users }}</div>
+        <div class="admin-kpi-label">Total Clients</div>
+        <div class="admin-kpi-delta">+{{ new_users_30d }} last 30 days</div>
+    </div>
+    <div class="admin-kpi admin-kpi--pro">
+        <div class="admin-kpi-icon"></div>
+        <div class="admin-kpi-value">{{ pro_users }}</div>
+        <div class="admin-kpi-label">Pro Subscribers</div>
+        <div class="admin-kpi-delta" style="color:var(--admin-text-muted);">{{ basic_users }} on Basic</div>
+    </div>
+    <div class="admin-kpi admin-kpi--demos">
+        <div class="admin-kpi-icon">📅</div>
+        <div class="admin-kpi-value">{{ pending_demos }}</div>
+        <div class="admin-kpi-label">Pending Demos</div>
+        <div class="admin-kpi-delta" style="color:{% if pending_demos > 0 %}#fbbf24{% else %}var(--admin-text-muted){% endif %};">
+            {% if pending_demos > 0 %}Action required{% else %}All caught up{% endif %}
+        </div>
+    </div>
+    <div class="admin-kpi admin-kpi--revenue">
+        <div class="admin-kpi-icon">💰</div>
+        <div class="admin-kpi-value">₹{{ '{:,.0f}'.format(total_revenue) }}</div>
+        <div class="admin-kpi-label">Total Revenue</div>
+        <div class="admin-kpi-delta">₹{{ '{:,.0f}'.format(revenue_30d) }} this month</div>
+    </div>
+    <div class="admin-kpi admin-kpi--products">
+        <div class="admin-kpi-icon">📦</div>
+        <div class="admin-kpi-value">{{ total_products }}</div>
+        <div class="admin-kpi-label">Total Products</div>
+        <div class="admin-kpi-delta" style="color:var(--admin-text-muted);">Across all clients</div>
+    </div>
+</div>
+
+<!-- Charts + Recent Activity -->
+<div class="admin-grid-2">
+    <!-- Revenue Chart -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-title">💹 Revenue — Last 14 Days</div>
+        </div>
+        <div class="admin-chart-wrap">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Tier Distribution -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-title">🥧 Plan Distribution</div>
+        </div>
+        <div class="admin-chart-wrap" style="display:flex; align-items:center; justify-content:center;">
+            <canvas id="tierChart" style="max-height:180px; max-width:180px;"></canvas>
+        </div>
+        <div style="display:flex; justify-content:center; gap:1.5rem; margin-top:1rem;">
+            <div style="text-align:center;">
+                <div style="font-size:1.25rem; font-weight:800; color:#818cf8;">{{ pro_users }}</div>
+                <div style="font-size:0.72rem; color:var(--admin-text-muted);">Pro</div>
+            </div>
+            <div style="text-align:center;">
+                <div style="font-size:1.25rem; font-weight:800; color:#9ca3b8;">{{ basic_users }}</div>
+                <div style="font-size:0.72rem; color:var(--admin-text-muted);">Basic</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Signups + Pending Demos -->
+<div class="admin-grid-2">
+    <!-- Recent Signups -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-title">🆕 Recent Signups</div>
+            <a href="{{ url_for('admin.clients') }}" class="admin-card-link">View all →</a>
+        </div>
+        {% if recent_users %}
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr>
+                    <th>User</th><th>Tier</th><th>Joined</th>
+                </tr></thead>
+                <tbody>
+                {% for u in recent_users %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:white;">{{ u.username }}</div>
+                        <div style="font-size:0.72rem; color:var(--admin-text-muted);">{{ u.email }}</div>
+                    </td>
+                    <td>
+                        <span class="abadge abadge--{{ u.tier }}">
+                            {% if u.tier == 'pro' %}{% else %}{% endif %} {{ u.tier|title }}
+                        </span>
+                    </td>
+                    <td style="color:var(--admin-text-muted);">
+                        {{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="admin-empty"><div class="admin-empty-icon">👤</div><p>No clients yet</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Pending Demos -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <div class="admin-card-title">📅 Pending Demo Requests</div>
+            <a href="{{ url_for('admin.demos') }}" class="admin-card-link">View all →</a>
+        </div>
+        {% if pending_demo_list %}
+        <div class="admin-table-wrap">
+            <table class="admin-table">
+                <thead><tr>
+                    <th>Contact</th><th>Company</th><th>Date</th><th>Action</th>
+                </tr></thead>
+                <tbody>
+                {% for d in pending_demo_list %}
+                <tr>
+                    <td>
+                        <div style="font-weight:600; color:white;">{{ d.username or d.email }}</div>
+                        <div style="font-size:0.72rem; color:var(--admin-text-muted);">{{ d.email }}</div>
+                    </td>
+                    <td style="color:var(--admin-text-muted);">{{ d.company or '—' }}</td>
+                    <td style="color:var(--admin-text-muted);">{{ d.created_at.strftime('%d %b') if d.created_at else '—' }}</td>
+                    <td>
+                        <button class="abtn abtn--teal abtn--sm"
+                                onclick="markContacted({{ d.id }}, this)">Contact</button>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="admin-empty"><div class="admin-empty-icon">✅</div><p>No pending demos</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Live clock
+function updateClock() {
+    const now = new Date();
+    document.getElementById('liveClock').textContent =
+        now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// Revenue chart
+const revenueData = {{ revenue_chart | tojson }};
+new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: {
+        labels: revenueData.map(d => d.date),
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: revenueData.map(d => d.revenue),
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            borderWidth: 2,
+            tension: 0.4,
+            fill: true,
+            pointBackgroundColor: '#6366f1',
+            pointRadius: 3,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555874', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#555874', font: { size: 10 }, callback: v => '₹' + v } }
+        }
+    }
+});
+
+// Tier distribution donut
+new Chart(document.getElementById('tierChart'), {
+    type: 'doughnut',
+    data: {
+        labels: ['Pro', 'Basic'],
+        datasets: [{
+            data: [{{ pro_users }}, {{ basic_users }}],
+            backgroundColor: ['rgba(99,102,241,0.8)', 'rgba(107,114,128,0.5)'],
+            borderColor: ['#6366f1', '#6b7280'],
+            borderWidth: 1,
+        }]
+    },
+    options: {
+        responsive: true, maintainAspectRatio: true,
+        cutout: '72%',
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Quick mark contacted
+async function markContacted(id, btn) {
+    btn.disabled = true; btn.textContent = '…';
+    const fd = new FormData(); fd.append('status', 'contacted');
+    const r = await fetch(`/admin/demos/${id}/status`, {method:'POST', body:fd});
+    const d = await r.json();
+    if (d.success) btn.closest('tr').style.opacity = '0.4';
+    else { btn.disabled = false; btn.textContent = 'Contact'; }
+}
+</script>
+{% endblock %}

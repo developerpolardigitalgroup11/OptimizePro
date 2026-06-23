@@ -16,11 +16,27 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Profile fields
+    full_name = db.Column(db.String(150), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    company = db.Column(db.String(150), nullable=True)
+    avatar_color = db.Column(db.String(7), default='#6366f1')  # hex color for initials avatar
+    avatar_filename = db.Column(db.String(255), nullable=True)
+
+    # Subscription fields
+    tier = db.Column(db.String(20), default='basic')  # 'basic', 'pro'
+    tier_expires_at = db.Column(db.DateTime, nullable=True)
+
+    # Admin flag
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
     # Relationships
-    products = db.relationship('Product', backref='owner', lazy='dynamic')
-    marketplaces = db.relationship('Marketplace', backref='owner', lazy='dynamic')
-    sales = db.relationship('Sale', backref='user', lazy='dynamic')
-    allocation_plans = db.relationship('AllocationPlan', backref='user', lazy='dynamic')
+    products = db.relationship('Product', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
+    marketplaces = db.relationship('Marketplace', backref='owner', lazy='dynamic', cascade='all, delete-orphan')
+    sales = db.relationship('Sale', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    allocation_plans = db.relationship('AllocationPlan', backref='user', lazy='dynamic', cascade='all, delete-orphan')
+    subscriptions = db.relationship('Subscription', backref='user', lazy='dynamic', cascade='all, delete-orphan', order_by='Subscription.created_at.desc()')
+    demo_requests = db.relationship('DemoRequest', backref='demo_user', lazy='dynamic', cascade='all, delete-orphan')
 
 
 class Marketplace(db.Model):
@@ -240,3 +256,54 @@ class RecommendationOutcome(db.Model):
     # Relationships
     product = db.relationship('Product', backref='recommendation_outcomes')
     marketplace = db.relationship('Marketplace', backref='recommendation_outcomes')
+
+
+class Subscription(db.Model):
+    """Tracks subscription / billing events per user."""
+    __tablename__ = 'subscriptions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    plan = db.Column(db.String(20), nullable=False)               # 'basic', 'pro'
+    status = db.Column(db.String(20), nullable=False, default='active')  # 'active', 'cancelled', 'expired'
+    amount = db.Column(db.Float, default=0.0)                     # amount paid in ₹
+    currency = db.Column(db.String(5), default='INR')
+    payment_method = db.Column(db.String(50), nullable=True)      # 'card', 'upi', etc.
+    transaction_id = db.Column(db.String(100), nullable=True)     # mock / real txn id
+    billing_period_start = db.Column(db.DateTime, nullable=True)
+    billing_period_end = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.Index('ix_subscription_user_created', 'user_id', 'created_at'),
+    )
+
+
+class DemoRequest(db.Model):
+    """Records from Basic-tier users who requested a product demo."""
+    __tablename__ = 'demo_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    username = db.Column(db.String(80), nullable=True)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=True)
+    company = db.Column(db.String(150), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'contacted', 'closed'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class UpgradeRequest(db.Model):
+    """Records requests from users wanting to upgrade to Pro."""
+    __tablename__ = 'upgrade_requests'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    name = db.Column(db.String(150), nullable=True)
+    email = db.Column(db.String(120), nullable=False)
+    phone = db.Column(db.String(20), nullable=True)
+    company = db.Column(db.String(150), nullable=True)
+    message = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(20), default='pending')  # 'pending', 'contacted', 'closed'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
