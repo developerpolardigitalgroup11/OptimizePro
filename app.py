@@ -82,6 +82,19 @@ def create_app(config_class=Config):
     # Create tables and seed defaults
     with app.app_context():
         db.create_all()
+        if app.config.get('IS_POSTGRES', False):
+            with db.engine.begin() as conn:
+                try:
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(150);"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS company VARCHAR(150);"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_color VARCHAR(7) DEFAULT '#6366f1';"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_filename VARCHAR(255);"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS tier VARCHAR(20) DEFAULT 'basic';"))
+                    conn.execute(db.text("ALTER TABLE users ADD COLUMN IF NOT EXISTS tier_expires_at TIMESTAMP;"))
+                    conn.execute(db.text("ALTER TABLE marketplaces ADD COLUMN IF NOT EXISTS logo_path VARCHAR(255);"))
+                except Exception as e:
+                    print(f"Error auto-migrating columns: {e}")
         _seed_defaults(app)
 
     # Root redirect
