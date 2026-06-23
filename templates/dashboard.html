@@ -121,25 +121,40 @@
     <div class="card">
         <div class="card-header">
             <h3>Active Alerts</h3>
+            {% if current_user.tier != 'basic' %}
             <a href="{{ url_for('alerts.list_alerts') }}" class="btn btn-sm btn-secondary">View All</a>
+            {% endif %}
         </div>
-        {% if alerts %}
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            {% for alert in alerts %}
-            <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); border-left: 3px solid {% if alert.priority == 'HIGH' %}var(--priority-high){% elif alert.priority == 'MEDIUM' %}var(--priority-medium){% else %}var(--priority-low){% endif %};">
-                <div style="font-size: 0.85rem;">{{ alert.message }}</div>
-                <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
-                    {{ alert.product.name }} · {{ alert.created_at.strftime('%b %d, %H:%M') }}
-                </div>
+        {% if current_user.tier == 'basic' %}
+        <div class="empty-state" style="padding: 2rem 1rem;">
+            <div class="empty-state-icon" style="background: var(--bg-primary);">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="var(--primary-color)" style="width: 24px; height: 24px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
             </div>
-            {% endfor %}
+            <h3>Pro Feature</h3>
+            <p>Upgrade to Pro to unlock smart alerts and inventory insights.</p>
+            <a href="{{ url_for('profile.index', tab='subscription') }}" class="btn btn-primary" style="margin-top: 1rem;">Upgrade Now</a>
         </div>
         {% else %}
-        <div class="empty-state">
-            <div class="empty-state-icon"></div>
-            <h3>All clear!</h3>
-            <p>No active alerts</p>
-        </div>
+            {% if alerts %}
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for alert in alerts %}
+                <div style="padding: 0.75rem; background: var(--bg-secondary); border-radius: var(--radius); border-left: 3px solid {% if alert.priority == 'HIGH' %}var(--priority-high){% elif alert.priority == 'MEDIUM' %}var(--priority-medium){% else %}var(--priority-low){% endif %};">
+                    <div style="font-size: 0.85rem;">{{ alert.message }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        {{ alert.product.name }} · {{ alert.created_at.strftime('%b %d, %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon"></div>
+                <h3>All clear!</h3>
+                <p>No active alerts</p>
+            </div>
+            {% endif %}
         {% endif %}
     </div>
 </div>

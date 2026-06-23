@@ -92,16 +92,16 @@ def _create_user_and_login(username, email, password, tier='free'):
     db.session.add(user)
     db.session.flush()  # get user.id
 
-    # Seed default marketplaces
-    for mp in DEFAULT_MARKETPLACES:
-        marketplace = Marketplace(
-            name=mp['name'],
-            code=mp['code'],
-            color=mp['color'],
-            priority=mp['priority'],
-            user_id=user.id,
-        )
-        db.session.add(marketplace)
+    # Seed default marketplaces (Disabled per user request)
+    # for mp in DEFAULT_MARKETPLACES:
+    #     marketplace = Marketplace(
+    #         name=mp['name'],
+    #         code=mp['code'],
+    #         color=mp['color'],
+    #         priority=mp['priority'],
+    #         user_id=user.id,
+    #     )
+    #     db.session.add(marketplace)
 
     # Record free subscription entry
     tier_info = TIER_CONFIG[tier]
