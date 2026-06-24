@@ -97,6 +97,28 @@ def create_app(config_class=Config):
                 except Exception as e:
                     print(f"Error auto-migrating columns: {e}")
         _seed_defaults(app)
+        
+        # --- TEMPORARY AUTOMATIC ADMIN CREATION ---
+        try:
+            import bcrypt
+            existing_admin = User.query.filter_by(email='admin@optimizepro.com').first()
+            if not existing_admin:
+                pw_hash = bcrypt.hashpw('Admin@123'.encode('utf-8'), bcrypt.gensalt(12)).decode('utf-8')
+                admin_user = User(
+                    username='Admin',
+                    email='admin@optimizepro.com',
+                    password_hash=pw_hash,
+                    tier=None,
+                    is_admin=True,
+                    avatar_color='#6366f1'
+                )
+                db.session.add(admin_user)
+                db.session.commit()
+                print("Admin user created automatically.")
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error creating admin: {e}")
+        # ------------------------------------------
 
     # Root redirect
     @app.route('/')
