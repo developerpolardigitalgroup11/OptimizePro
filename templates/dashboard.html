@@ -5,7 +5,9 @@
     <h1>Dashboard</h1>
     <div class="actions">
         <a href="{{ url_for('sales.record') }}" class="btn btn-primary">Record Sale</a>
+        {% if current_user.tier != 'basic' %}
         <a href="{{ url_for('allocation.planner') }}" class="btn btn-secondary">Allocate Stock</a>
+        {% endif %}
     </div>
 </div>
 

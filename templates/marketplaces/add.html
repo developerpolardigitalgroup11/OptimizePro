@@ -159,8 +159,8 @@
         <div class="form-group">
             <label for="marketplaceTypeSelect">Marketplace Type</label>
             <select id="marketplaceTypeSelect" class="form-control" onchange="switchType(this.value)">
-                <option value="ecommerce">🛒 E-commerce</option>
-                <option value="other">✏️ Other</option>
+                <option value="ecommerce">E-commerce</option>
+                <option value="other">Other</option>
             </select>
             <input type="hidden" name="marketplace_type" id="marketplaceType" value="ecommerce">
         </div>
@@ -177,6 +177,14 @@
                     <option value="flipkart">Flipkart</option>
                     <option value="meesho">Meesho</option>
                     <option value="myntra">Myntra</option>
+                    <option value="ajio">Ajio</option>
+                    <option value="nykaa">Nykaa</option>
+                    <option value="tatacliq">Tata CLiQ</option>
+                    <option value="snapdeal">Snapdeal</option>
+                    <option value="jiomart">JioMart</option>
+                    <option value="blinkit">Blinkit</option>
+                    <option value="firstcry">FirstCry</option>
+                    <option value="pepperfry">Pepperfry</option>
                 </select>
                 <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">
                     Name, color, and logo are automatically assigned for known platforms.
@@ -238,9 +246,9 @@
         <!-- ④ Priority (shared) -->
         <div class="form-divider"></div>
         <div class="form-group">
-            <label for="priority">Priority <small style="color:var(--text-muted); font-weight:400;">(1 = lowest, 10 = highest)</small></label>
+            <label for="priority">Priority <small style="color:var(--text-muted); font-weight:400;">(1=Highest Priority and so on. No maximum number limit.)</small></label>
             <input type="number" id="priority" name="priority" class="form-control"
-                   value="1" min="1" max="10">
+                   value="1" min="1">
         </div>
 
         <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;" id="submitBtn">

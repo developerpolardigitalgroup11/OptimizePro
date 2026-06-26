@@ -14,19 +14,13 @@
             </div>
             <div class="form-group">
                 <label for="category">Category</label>
-                <select id="category" name="category" class="form-control" required>
-                    <option value="General" selected>General / Other</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Fashion & Apparel">Fashion & Apparel</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                    <option value="Sports & Outdoors">Sports & Outdoors</option>
-                    <option value="Books & Media">Books & Media</option>
-                    <option value="Toys & Games">Toys & Games</option>
-                    <option value="Health & Household">Health & Household</option>
-                    <option value="Groceries & Food">Groceries & Food</option>
-                    <option value="Office Supplies">Office Supplies</option>
-                </select>
+                <input type="text" id="category" name="category" list="category_options" class="form-control" placeholder="Select or type new category" required>
+                <datalist id="category_options">
+                    {% for cat in current_user.category_list %}
+                    <option value="{{ cat }}">
+                    {% endfor %}
+                </datalist>
+                <small style="color:var(--text-muted); display:block; margin-top:0.25rem;">Type a new category to save it for future products.</small>
             </div>
         </div>
         <div class="form-group">
@@ -35,8 +29,18 @@
         </div>
         <div class="grid-2">
             <div class="form-group">
-                <label for="cost_price">Cost Price (₹)</label>
+                <label for="cost_price">Cost Price (<span id="currencyLabel">{{ current_user.default_currency }}</span>)</label>
                 <input type="number" id="cost_price" name="cost_price" class="form-control" step="0.01" min="0" value="0" required>
+                <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <label for="currency_select" style="margin: 0; font-size: 0.75rem; color: var(--text-muted);">Default Currency:</label>
+                    <select id="currency_select" name="default_currency" class="form-control" style="width: auto; padding: 0.2rem 1.5rem 0.2rem 0.5rem; font-size: 0.75rem;" onchange="document.getElementById('currencyLabel').textContent = this.value;">
+                        <option value="₹" {% if current_user.default_currency == '₹' %}selected{% endif %}>₹ (INR)</option>
+                        <option value="$" {% if current_user.default_currency == '$' %}selected{% endif %}>$ (USD)</option>
+                        <option value="€" {% if current_user.default_currency == '€' %}selected{% endif %}>€ (EUR)</option>
+                        <option value="£" {% if current_user.default_currency == '£' %}selected{% endif %}>£ (GBP)</option>
+                        <option value="¥" {% if current_user.default_currency == '¥' %}selected{% endif %}>¥ (JPY)</option>
+                    </select>
+                </div>
             </div>
             <div class="form-group">
                 <label for="quantity">Warehouse Quantity</label>
@@ -44,18 +48,46 @@
             </div>
         </div>
 
+        {% if current_user.column_list %}
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
+        <h3 style="margin-top:0; margin-bottom: 1.5rem;">Custom Attributes</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            {% for col in current_user.column_list %}
+            <div class="form-group">
+                <label>{{ col.name }}</label>
+                <input type="{{ 'number' if col.type == 'number' else 'date' if col.type == 'date' else 'text' }}" name="{{ col.id }}" class="form-control" placeholder="Enter {{ col.name|lower }}">
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if marketplaces %}
+        <hr style="margin: 2rem 0; border: none; border-top: 1px solid var(--border);">
         <div class="form-group">
-            <label>List on Marketplaces</label>
-            <div class="mp-listing-grid">
+            <label style="margin-bottom: 1rem; display: block; font-size: 1.1rem; font-weight: 600;">List on Marketplaces</label>
+            <div class="mp-listing-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                 {% for mp in marketplaces %}
-                <div class="mp-listing-item">
-                    <input type="checkbox" id="mp_{{ mp.id }}" name="mp_{{ mp.id }}_listed" value="1">
-                    <label for="mp_{{ mp.id }}" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0;">
-                        <span class="mp-dot" style="background: {{ mp.color }}; width: 10px; height: 10px; border-radius: 50%;"></span>
-                        {{ mp.name }}
-                    </label>
-                    <input type="number" name="mp_{{ mp.id }}_price" class="mp-price-input" placeholder="Selling price" step="0.01" min="0">
+                <div class="mp-listing-item" style="display: flex; flex-direction: column; align-items: stretch; text-align: left; padding: 1.25rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary); transition: border-color 0.2s, box-shadow 0.2s;" onmouseover="this.style.borderColor='var(--primary-color)';" onmouseout="if(!document.getElementById('mp_{{ mp.id }}').checked) this.style.borderColor='var(--border)';">
+                    <div style="display: flex; align-items: center; justify-content: flex-start; gap: 0.75rem;">
+                        <input type="checkbox" id="mp_{{ mp.id }}" name="mp_{{ mp.id }}_listed" value="1" 
+                               style="width: 1.2rem; height: 1.2rem; cursor: pointer; accent-color: var(--primary-color);"
+                               onchange="document.getElementById('mp_fields_{{ mp.id }}').style.display = this.checked ? 'flex' : 'none'; this.closest('.mp-listing-item').style.borderColor = this.checked ? 'var(--primary-color)' : 'var(--border)'; this.closest('.mp-listing-item').style.boxShadow = this.checked ? '0 0 0 1px var(--primary-color)' : 'none';">
+                        <label for="mp_{{ mp.id }}" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin: 0; font-weight: 600; flex: 1; user-select: none;">
+                            <span class="mp-dot" style="background: {{ mp.color }}; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 4px {{ mp.color }}80;"></span>
+                            {{ mp.name }}
+                        </label>
+                    </div>
+                    
+                    <div id="mp_fields_{{ mp.id }}" style="display: none; flex-direction: column; gap: 1rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; display: block;">Selling Price ({{ current_user.default_currency }})</label>
+                            <input type="number" name="mp_{{ mp.id }}_price" class="form-control" placeholder="0.00" step="0.01" min="0" style="background: var(--bg-color);">
+                        </div>
+                        <div>
+                            <label style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; display: block;">Allocated Quantity</label>
+                            <input type="number" name="mp_{{ mp.id }}_qty" class="form-control" placeholder="0" min="0" style="background: var(--bg-color);">
+                        </div>
+                    </div>
                 </div>
                 {% endfor %}
             </div>

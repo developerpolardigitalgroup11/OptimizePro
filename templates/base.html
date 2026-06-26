@@ -38,22 +38,15 @@
                 <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if request.endpoint == 'dashboard.index' %}active{% endif %}">
                     <span class="nav-icon nav-icon--dashboard">{% include 'icons/dashboard.svg' %}</span> Dashboard
                 </a>
-                <a href="{{ url_for('products.list_products') }}" class="nav-item {% if request.blueprint == 'products' %}active{% endif %}">
-                    <span class="nav-icon nav-icon--products">{% include 'icons/products.svg' %}</span> Products
-                </a>
+
                 <a href="{{ url_for('sales.record') }}" class="nav-item {% if request.blueprint == 'sales' %}active{% endif %}">
                     <span class="nav-icon nav-icon--sales">{% include 'icons/sales.svg' %}</span> Sales
                 </a>
-                <a href="{{ url_for('marketplaces.list_marketplaces') }}" class="nav-item {% if request.blueprint == 'marketplaces' %}active{% endif %}">
-                    <span class="nav-icon nav-icon--marketplaces">{% include 'icons/marketplaces.svg' %}</span> Marketplaces
-                </a>
+
                 <a href="{{ url_for('forecasts.overview') }}" class="nav-item {% if request.blueprint == 'forecasts' %}active{% endif %}">
                     <span class="nav-icon nav-icon--forecasts">{% include 'icons/forecasts.svg' %}</span> Forecasts
                 </a>
                 {% if current_user.tier == 'basic' %}
-                <a href="{{ url_for('allocation.planner') }}" class="nav-item {% if request.blueprint == 'allocation' %}active{% endif %}" style="color: var(--text-muted); opacity: 0.7;">
-                    <span class="nav-icon nav-icon--allocation">{% include 'icons/allocation.svg' %}</span> Allocation <span style="margin-left:auto;">🔒</span>
-                </a>
                 <a href="{{ url_for('analytics.dashboard') }}" class="nav-item {% if request.blueprint == 'analytics' %}active{% endif %}" style="color: var(--text-muted); opacity: 0.7;">
                     <span class="nav-icon nav-icon--analytics">{% include 'icons/analytics.svg' %}</span> Analytics <span style="margin-left:auto;">🔒</span>
                 </a>
@@ -72,8 +65,21 @@
                     <span class="nav-badge" id="alertBadge" style="display:none;">0</span>
                 </a>
                 {% endif %}
+                <div style="flex: 1;"></div>
             </nav>
-            <div class="sidebar-footer">
+            
+            <div class="sidebar-inventory" style="padding: 1rem 0.75rem 0.5rem 0.75rem; border-top: 1px solid var(--border);">
+                <div style="padding: 0 1rem 0.5rem 1rem; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em;">Configure Inventory</div>
+                <a href="{{ url_for('marketplaces.list_marketplaces') }}" class="nav-item {% if request.blueprint in ['marketplaces', 'products'] %}active{% endif %}">
+                    <span class="nav-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+                        </svg>
+                    </span> Inventory Setup
+                </a>
+            </div>
+
+            <div class="sidebar-footer" style="border-top: none;">
                 <a href="{{ url_for('profile.index') }}" class="user-info user-info--link"
                    title="View Profile">
                     <div class="avatar" style="background: {{ current_user.avatar_color }}; overflow: hidden; position: relative;">

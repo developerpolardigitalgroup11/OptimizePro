@@ -108,6 +108,8 @@
 /* --- Tables --- */
 .table-container {
     overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 250px);
     border-radius: var(--radius);
 }
 
@@ -118,6 +120,9 @@ table {
 }
 
 thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     background: var(--bg-secondary);
     color: var(--text-secondary);
     font-weight: 600;

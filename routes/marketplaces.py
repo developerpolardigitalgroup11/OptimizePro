@@ -35,7 +35,7 @@ def _save_logo(file_storage) -> str | None:
 @marketplaces_bp.route('/')
 @login_required
 def list_marketplaces():
-    mps = Marketplace.query.filter_by(user_id=current_user.id).order_by(Marketplace.priority.desc()).all()
+    mps = Marketplace.query.filter_by(user_id=current_user.id).order_by(Marketplace.priority.asc()).all()
     return render_template('marketplaces/list.html', marketplaces=mps)
 
 
@@ -51,10 +51,18 @@ def add_marketplace():
             platform = request.form.get('platform', '').strip().lower()
 
             platforms = {
-                'amazon':   {'name': 'Amazon',   'color': '#FF9900'},
-                'flipkart': {'name': 'Flipkart',  'color': '#2874F0'},
-                'meesho':   {'name': 'Meesho',    'color': '#F43397'},
-                'myntra':   {'name': 'Myntra',    'color': '#E72E77'},
+                'amazon':    {'name': 'Amazon',    'color': '#FF9900'},
+                'flipkart':  {'name': 'Flipkart',  'color': '#2874F0'},
+                'meesho':    {'name': 'Meesho',    'color': '#F43397'},
+                'myntra':    {'name': 'Myntra',    'color': '#E72E77'},
+                'ajio':      {'name': 'Ajio',      'color': '#2C3E50'},
+                'nykaa':     {'name': 'Nykaa',     'color': '#FC2779'},
+                'tatacliq':  {'name': 'Tata CLiQ', 'color': '#DA1A35'},
+                'snapdeal':  {'name': 'Snapdeal',  'color': '#E40046'},
+                'jiomart':   {'name': 'JioMart',   'color': '#0088CC'},
+                'blinkit':   {'name': 'Blinkit',   'color': '#F8CB46'},
+                'firstcry':  {'name': 'FirstCry',  'color': '#F19A21'},
+                'pepperfry': {'name': 'Pepperfry', 'color': '#F15A22'},
             }
 
             if platform not in platforms:

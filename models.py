@@ -23,6 +23,42 @@ class User(UserMixin, db.Model):
     avatar_color = db.Column(db.String(7), default='#6366f1')  # hex color for initials avatar
     avatar_filename = db.Column(db.String(255), nullable=True)
 
+    # Custom Settings
+    default_currency = db.Column(db.String(10), default='₹')
+    custom_categories = db.Column(db.Text, default='[]')  # JSON array of strings
+    product_columns = db.Column(db.Text, default='[]')  # JSON array of dicts: {"id", "name", "type"}
+
+    @property
+    def column_list(self):
+        import json
+        try:
+            cols = json.loads(self.product_columns or '[]')
+            return cols if isinstance(cols, list) else []
+        except:
+            return []
+
+    @column_list.setter
+    def column_list(self, val_list):
+        import json
+        self.product_columns = json.dumps(val_list)
+
+    @property
+    def category_list(self):
+        import json
+        try:
+            cats = json.loads(self.custom_categories or '[]')
+            if not isinstance(cats, list) or not cats:
+                # Provide defaults if empty
+                return ["General", "Electronics", "Fashion & Apparel", "Home & Kitchen", "Beauty & Personal Care", "Sports & Outdoors"]
+            return cats
+        except:
+            return ["General"]
+
+    @category_list.setter
+    def category_list(self, val_list):
+        import json
+        self.custom_categories = json.dumps(val_list)
+
     # Subscription fields
     tier = db.Column(db.String(20), default='basic')  # 'basic', 'pro'
     tier_expires_at = db.Column(db.DateTime, nullable=True)
@@ -71,6 +107,7 @@ class Product(db.Model):
     category = db.Column(db.String(100), default='General')
     cost_price = db.Column(db.Float, nullable=False, default=0.0)
     total_warehouse_qty = db.Column(db.Integer, nullable=False, default=0)
+    custom_attributes = db.Column(db.Text, default='{}') # JSON dict of col_id: value
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -80,6 +117,22 @@ class Product(db.Model):
         db.UniqueConstraint('sku', 'user_id', name='uq_product_sku_user'),
         db.CheckConstraint('total_warehouse_qty >= 0', name='ck_warehouse_qty_positive'),
     )
+
+    @property
+    def attributes(self):
+        import json
+        try:
+            return json.loads(self.custom_attributes or '{}')
+        except:
+            return {}
+
+    @attributes.setter
+    def attributes(self, val_dict):
+        import json
+        self.custom_attributes = json.dumps(val_dict)
+
+    def get_attr(self, col_id):
+        return self.attributes.get(col_id, '')
 
     # Relationships
     marketplace_inventory = db.relationship('MarketplaceInventory', backref='product', lazy='dynamic', cascade='all, delete-orphan')

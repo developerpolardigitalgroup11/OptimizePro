@@ -1,11 +1,39 @@
 """CSV parsing and validation service."""
 
 import pandas as pd
-from models import db, Product, MarketplaceInventory, Marketplace
+from models import db, Product, MarketplaceInventory, Marketplace, User
 
+
+import re
 
 REQUIRED_COLUMNS = ['sku', 'name', 'cost_price', 'quantity']
 OPTIONAL_COLUMNS = ['category']
+
+
+def clean_typography(text):
+    """Perform basic typography and casing cleanup on strings."""
+    if not isinstance(text, str) or pd.isna(text):
+        return text
+    
+    text = text.strip()
+    if not text:
+        return text
+        
+    text = re.sub(r'\s+', ' ', text)
+    
+    if text.isupper() or text.islower():
+        text = text.title()
+        
+    text = re.sub(r'(?i)\biphone\b', 'iPhone', text)
+    text = re.sub(r'(?i)\bipad\b', 'iPad', text)
+    text = re.sub(r'(?i)\bmacbook\b', 'MacBook', text)
+    text = re.sub(r'(?i)\bimac\b', 'iMac', text)
+    
+    text = re.sub(r'(?i)\b(\d+)\s*gb\b', r'\1GB', text)
+    text = re.sub(r'(?i)\b(\d+)\s*tb\b', r'\1TB', text)
+    text = re.sub(r'(?i)\b(\d+)\s*mb\b', r'\1MB', text)
+    
+    return text
 
 
 def parse_csv(file_storage):
@@ -53,25 +81,44 @@ def import_csv(df, user_id):
     updated = 0
     errors = []
 
-    # Detect marketplace price columns
+    # Detect marketplace price and quantity columns
     marketplaces = Marketplace.query.filter_by(user_id=user_id, is_active=True).all()
     mp_price_cols = {}
+    mp_qty_cols = {}
     for mp in marketplaces:
-        col_name = f'{mp.code}_price'
-        if col_name in df.columns:
-            mp_price_cols[mp] = col_name
+        price_col = f'{mp.code}_price'
+        qty_col = f'{mp.code}_quantity'
+        if price_col in df.columns:
+            mp_price_cols[mp] = price_col
+        if qty_col in df.columns:
+            mp_qty_cols[mp] = qty_col
+
+    user = User.query.get(user_id)
+    user_cols = user.column_list if user else []
+    custom_col_map = {}
+    for col in user_cols:
+        cleaned_name = col['name'].strip().lower().replace(' ', '_')
+        if cleaned_name in df.columns:
+            custom_col_map[cleaned_name] = col['id']
 
     for idx, row in df.iterrows():
         try:
             sku = str(row['sku']).strip()
-            name = str(row['name']).strip()
+            name = clean_typography(str(row['name']))
             cost_price = float(row['cost_price'])
             quantity = int(float(row['quantity']))
-            category = str(row.get('category', 'General')).strip() if 'category' in row else 'General'
+            category = clean_typography(str(row.get('category', 'General'))) if 'category' in row else 'General'
 
             if not sku or not name:
                 errors.append(f'Row {idx + 2}: Empty SKU or name')
                 continue
+
+            # Map custom attributes
+            custom_attrs = {}
+            for col_name, col_id in custom_col_map.items():
+                val = row.get(col_name)
+                if pd.notna(val):
+                    custom_attrs[col_id] = str(val).strip()
 
             # Upsert product
             product = Product.query.filter_by(sku=sku, user_id=user_id).first()
@@ -80,6 +127,11 @@ def import_csv(df, user_id):
                 product.cost_price = cost_price
                 product.total_warehouse_qty = quantity
                 product.category = category
+                
+                existing_attrs = product.attributes
+                existing_attrs.update(custom_attrs)
+                product.attributes = existing_attrs
+                
                 updated += 1
             else:
                 product = Product(
@@ -90,31 +142,48 @@ def import_csv(df, user_id):
                     total_warehouse_qty=quantity,
                     user_id=user_id,
                 )
+                product.attributes = custom_attrs
                 db.session.add(product)
                 db.session.flush()
                 imported += 1
 
-            # Handle marketplace prices
-            for mp, col in mp_price_cols.items():
+            # We need a unified set of marketplaces from either price or qty
+            mps_in_row = set(mp_price_cols.keys()).union(set(mp_qty_cols.keys()))
+            
+            # Handle marketplace prices and quantities
+            for mp in mps_in_row:
                 try:
-                    price = float(row[col])
-                    mi = MarketplaceInventory.query.filter_by(
+                    price = float(row[mp_price_cols[mp]]) if mp in mp_price_cols else 0.0
+                except (ValueError, TypeError, KeyError):
+                    price = 0.0
+                
+                try:
+                    qty = int(float(row[mp_qty_cols[mp]])) if mp in mp_qty_cols else 0
+                except (ValueError, TypeError, KeyError):
+                    qty = 0
+                
+                # If neither was in the row for this MP specifically (somehow), skip
+                if mp not in mp_price_cols and mp not in mp_qty_cols:
+                    continue
+                    
+                mi = MarketplaceInventory.query.filter_by(
+                    product_id=product.id,
+                    marketplace_id=mp.id,
+                ).first()
+                if mi:
+                    if mp in mp_price_cols:
+                        mi.selling_price = price
+                    if mp in mp_qty_cols:
+                        mi.allocated_qty = qty
+                else:
+                    mi = MarketplaceInventory(
                         product_id=product.id,
                         marketplace_id=mp.id,
-                    ).first()
-                    if mi:
-                        mi.selling_price = price
-                    else:
-                        mi = MarketplaceInventory(
-                            product_id=product.id,
-                            marketplace_id=mp.id,
-                            selling_price=price,
-                            allocated_qty=0,
-                            is_listed=True,
-                        )
-                        db.session.add(mi)
-                except (ValueError, TypeError):
-                    pass  # Skip invalid prices
+                        selling_price=price,
+                        allocated_qty=qty,
+                        is_listed=True,
+                    )
+                    db.session.add(mi)
 
         except Exception as e:
             errors.append(f'Row {idx + 2}: {str(e)}')

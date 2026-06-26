@@ -43,7 +43,8 @@ def generate_allocation(product_id, total_units, user_id):
         # Weight = predicted_demand × margin_factor × priority_factor
         margin = max(mi.selling_price - product.cost_price, 0.01)
         margin_factor = 1.0 + (margin / max(mi.selling_price, 1)) * 0.2  # up to 20% bonus for high margin
-        priority_factor = 1.0 + (mp.priority - 1) * 0.1  # up to 20% bonus for high priority
+        priority_val = max(1, mp.priority)
+        priority_factor = 1.0 + (0.2 / priority_val)  # up to 20% bonus for priority 1, decreasing as number increases
 
         weight = predicted_demand * margin_factor * priority_factor
         total_weight += weight
